@@ -1,138 +1,240 @@
-import { useRef, useState } from "react"
+// PhotoCapturePage.jsx
+import { useRef, useState, useEffect } from "react"
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from "react-router-dom"
+import { AnimatePresence, motion } from 'framer-motion'
+import CustomizationPage from "./CustomizationPage"
 import ThemeToggle from "../components/ThemeToggle"
 import PhotoUploader from "../components/PhotoUploader"
 import WebcamCapture from "../components/WebcamCapture"
 import Countdown from "../components/Countdown"
 import PhotoCount from "../components/PhotoCount"
 
-const PhotoCapturePage = ({ photos, setPhotos, onNavigate, setTargetCount, targetCount }) => {
+const PhotoCapturePage = () => {
+  const { isDark } = useTheme();
   const webcamRef = useRef(null)
+  const countdownRef = useRef(null)
+  const [photos, setPhotos] = useState([])
   const [mode, setMode] = useState("camera")
-  const [capturedCount, setCapturedCount] = useState(0)
+  const [targetCount, setTargetCount] = useState(4)
   const [countdownActive, setCountdownActive] = useState(false)
-  const navigate = useNavigate()
+  const [flashActive, setFlashActive] = useState(false)
+  const [currentPage, setCurrentPage] = useState('capture')
+  const [currentCountdown, setCurrentCountdown] = useState(null)
 
   const handleUpload = (files) => {
-    const newPhotos = [...photos, ...files]
-    if (newPhotos.length > 4) {
-      alert('You can only upload up to 4 photos.')
-      return
+    if (Array.isArray(files) && typeof files[0] === 'string') {
+      const newPhotos = [...photos, ...files]
+      if (newPhotos.length > targetCount) {
+        alert(`You can only upload up to ${targetCount} photos.`)
+        return
+      }
+      setPhotos(newPhotos)
+      if (newPhotos.length === targetCount) {
+        setTimeout(() => setCurrentPage('customize'), 500)
+      }
+    } else {
+      setPhotos(files)
     }
-    setPhotos(newPhotos)
+  }
+
+  const triggerFlash = () => {
+    setFlashActive(true)
+    setTimeout(() => setFlashActive(false), 300)
   }
 
   const handleCapture = (image) => {
-    if (photos.length >= 4) {
-      alert('You can only have up to 4 photos.');
-      return;
-    }
-    const newPhotos = [...photos, image];
-    setPhotos(newPhotos);
+    if (photos.length >= 4) return
+    const newPhotos = [...photos, image]
+    setPhotos(newPhotos)
+    
     if (newPhotos.length === targetCount) {
-      setTimeout(() => navigate('/customize'), 300);
+      setTimeout(() => setCurrentPage('customize'), 800)
     }
-  };
+  }
 
   const handleAutoCapture = () => {
     if (webcamRef.current) {
-      const canvas = document.createElement("canvas")
-      const video = webcamRef.current.querySelector("video")
-      if (!video) return
-
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-
-      const ctx = canvas.getContext("2d")
-      ctx.drawImage(video, 0, 0)
-
-      const imageSrc = canvas.toDataURL("image/png")
-      handleCapture(imageSrc)
+      const img = webcamRef.current.capturePhoto()
+      if (img) {
+        triggerFlash()
+        handleCapture(img)
+      }
     }
   }
 
-  const startCaptureSequence = async () => {
+  const handleCountdownSequence = async () => {
     setCountdownActive(true)
+
     for (let i = 0; i < targetCount; i++) {
-      await new Promise(resolve => setTimeout(resolve, (i === 0 ? 0 : 3000)))
-      handleAutoCapture()
+      if (photos.length + i >= 4) break
+
+      await new Promise((resolve) => {
+        const proceed = () => {
+          setCurrentCountdown(null) // Clear countdown
+          triggerFlash()
+          handleAutoCapture()
+          resolve()
+        }
+
+        if (countdownRef.current?.hasCountdown()) {
+          // Show countdown on video
+          const countdownSeconds = countdownRef.current.getCurrentTime?.() || 3
+          let timeLeft = countdownSeconds
+
+          const countdownInterval = setInterval(() => {
+            setCurrentCountdown(timeLeft)
+            timeLeft--
+
+            if (timeLeft < 0) {
+              clearInterval(countdownInterval)
+              proceed()
+            }
+          }, 1000)
+
+          setCurrentCountdown(countdownSeconds)
+        } else {
+          proceed()
+        }
+      })
+
+      if (i < targetCount - 1) {
+        await new Promise(res => setTimeout(res, 1000))
+      }
     }
+
     setCountdownActive(false)
+    setCurrentCountdown(null)
   }
 
-  const goToCustomization = () => {
-    if (photos.length < targetCount) {
-      alert(`Please capture ${targetCount} photos before continuing.`)
-      return
-    }
-    onNavigate('customize')
+  if (currentPage === 'customize') {
+    return <CustomizationPage photos={photos} onNavigate={() => setCurrentPage('capture')} />
   }
 
   return (
-    <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-all px-6 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <h1 className="text-5xl font-header tracking-wide">Photo-Bot</h1>
-        <div className="flex flex-col items-end gap-2">
-          <ThemeToggle />
-          <div className="space-y-1 cursor-pointer">
-            <div className="w-6 h-0.5 bg-black dark:bg-white"></div>
-            <div className="w-6 h-0.5 bg-black dark:bg-white"></div>
-            <div className="w-6 h-0.5 bg-black dark:bg-white"></div>
-          </div>
-        </div>
-      </div>
+    <div className={`min-h-screen transition-all duration-500`}>
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 transition-all duration-500">
 
-      {/* Tabs */}
-      <div className="flex justify-center gap-4 mb-4">
-        <button
-          onClick={() => setMode("camera")}
-          className={`border px-4 py-2 rounded font-body transition ${
-            mode === "camera"
-              ? "bg-black text-white dark:bg-white dark:text-black"
-              : "border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-          }`}
-        >
-          Camera
-        </button>
-        <button
-          onClick={() => setMode("upload")}
-          className={`border px-4 py-2 rounded font-body transition ${
-            mode === "upload"
-              ? "bg-black text-white dark:bg-white dark:text-black"
-              : "border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-          }`}
-        >
-          Upload Images
-        </button>
-      </div>
-
-      {/* Active View */}
-      <div className="flex justify-center">
-        {mode === "camera" ? (
-          <div className="w-full max-w-xl">
-            <WebcamCapture ref={webcamRef} onCapture={handleCapture} />
-          </div>
-        ) : (
-          <PhotoUploader onUpload={handleUpload} />
+        {/* Flash overlay */}
+        {flashActive && (
+          <div className="fixed inset-0 z-50 bg-white opacity-90 pointer-events-none transition-opacity duration-300" />
         )}
-      </div>
 
-      {/* Bottom Controls – only shown in Camera mode */}
-      {mode === "camera" && (
-        <div className="flex justify-between items-center w-full max-w-xl mx-auto mt-6">
-          <div className="flex gap-4">
-            <Countdown onReady={startCaptureSequence} />
-            <PhotoCount targetCount={targetCount} setTargetCount={setTargetCount} />
+        {/* Countdown overlay */}
+        {countdownActive && (
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-20 flex items-center justify-center pointer-events-none">
+            <div className="text-8xl font-bold text-white drop-shadow-2xl animate-pulse">
+              📸
+            </div>
           </div>
-          <button
-            onClick={goToCustomization}
-            className="px-6 py-2 border border-black dark:border-white font-body rounded hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition"
-          >
-            Filter (Coming Soon)
-          </button>
+        )}
+
+        <div className="container mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-12">
+            <div>
+              <h1 className="text-6xl font-light tracking-wide text-stone-800 dark:text-stone-100 mb-2">
+                PHOTO
+              </h1>
+              <h2 className="text-2xl font-light text-stone-600 dark:text-stone-400 tracking-widest">
+                STUDIO
+              </h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <ThemeToggle/>
+            </div>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="flex justify-center gap-6 mb-12">
+            <button
+              onClick={() => setMode("camera")}
+              className={`px-8 py-4 rounded-full font-medium transition-all duration-300 ${
+                mode === "camera" 
+                  ? "bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-xl" 
+                  : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-700 hover:shadow-lg"
+              }`}
+            >
+              Camera
+            </button>
+            <button
+              onClick={() => setMode("upload")}
+              className={`px-8 py-4 rounded-full font-medium transition-all duration-300 ${
+                mode === "upload" 
+                  ? "bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-xl" 
+                  : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-700 hover:shadow-lg"
+              }`}
+            >
+              Upload Photos
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex justify-center mb-8">
+            {mode === "camera" ? (
+              <WebcamCapture
+              ref={webcamRef}
+              countdownTime={currentCountdown}
+              onClickCapture={() => {
+                if (countdownRef.current?.hasCountdown()) {
+                  handleCountdownSequence()
+                } else {
+                  const img = webcamRef.current?.capturePhoto()
+                  if (img) {
+                    triggerFlash()
+                    handleCapture(img)
+                  }
+                }
+              }}
+            />
+            ) : (
+            <PhotoUploader 
+              onUpload={handleUpload} 
+              photos={photos} 
+              targetCount={targetCount} 
+              />
+            )}
+          </div>
+
+          {/* Camera Controls */}
+          {mode === "camera" && (
+            <>
+              {/* Progress indicator */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 bg-white dark:bg-stone-900 px-6 py-3 rounded-full shadow-lg border border-stone-200 dark:border-stone-700">
+                  <span className="text-stone-600 dark:text-stone-400 font-medium">
+                    {photos.length} of {targetCount} photos
+                  </span>
+                  <div className="flex gap-1">
+                    {Array.from({ length: targetCount }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${
+                          i < photos.length
+                            ? 'bg-stone-600 dark:bg-stone-400'
+                            : 'bg-stone-200 dark:bg-stone-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Control buttons */}
+              <div className="flex justify-center items-center gap-6">
+                <Countdown ref={countdownRef} />
+                <PhotoCount targetCount={targetCount} setTargetCount={setTargetCount} />
+                <button
+                  onClick={() => setCurrentPage('customize')}
+                  className="px-8 py-3 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 rounded-full shadow-lg border border-stone-200 dark:border-stone-700 font-medium transition-all duration-300 hover:shadow-xl hover:scale-105"
+                >
+                  Customize →
+                </button>
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
