@@ -1,45 +1,61 @@
-import { useState } from "react"
+import { useEffect, useState } from 'react';
+import { Clock3 } from 'lucide-react';
 
-const Countdown = ({ seconds, onTimerComplete }) => {
-  const [timeLeft, setTimeLeft] = useState(seconds)
-  const [isActive, setIsActive] = useState(false)
+const COUNTDOWN_VALUES = [3, 5, 10];
 
-  const startTimer = () => {
-    setIsActive(true)
-    setTimeLeft(seconds)
-    
-    const interval = setInterval(() => {
-      setTimeLeft((time) => {
-        if (time <= 1) {
-          clearInterval(interval)
-          setIsActive(false)
-          onTimerComplete?.()
-          return 0
-        }
-        return time - 1
-      })
-    }, 1000)
-  }
+const Countdown = ({ onReady }) => {
+  const [modeIndex, setModeIndex] = useState(-1); // -1 = off
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const currentSeconds = COUNTDOWN_VALUES[modeIndex] || null;
+
+  useEffect(() => {
+    if (!isRunning || timeLeft === null) return;
+
+    if (timeLeft === 0) {
+      setIsRunning(false);
+      setTimeLeft(null);
+      onReady?.();
+      return;
+    }
+
+    const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isRunning, timeLeft, onReady]);
+
+  const cycleMode = () => {
+    if (isRunning) return; // prevent changing while running
+    const next = (modeIndex + 1) % (COUNTDOWN_VALUES.length + 1);
+    setModeIndex(next === COUNTDOWN_VALUES.length ? -1 : next);
+  };
+
+  const startCountdown = (callback) => {
+    if (modeIndex === -1 || isRunning) {
+      callback?.();
+      return;
+    }
+    setTimeLeft(currentSeconds);
+    setIsRunning(true);
+    onReady.current = callback;
+  };
 
   return (
-    <div className="mb-6">
-      <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-gray-200 text-center">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">⏰ Timer</h3>
-        <div className="text-4xl font-bold mb-4 text-blue-600">{timeLeft}s</div>
-        <button
-          onClick={startTimer}
-          disabled={isActive}
-          className={`px-6 py-3 rounded-lg font-semibold text-lg transition-colors ${
-            isActive
-              ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-              : 'bg-purple-500 text-white hover:bg-purple-600'
-          }`}
-        >
-          {isActive ? '⏱️ Running...' : '▶️ Start Timer'}
-        </button>
-      </div>
-    </div>
-  )
-}
+    <button
+      onClick={cycleMode}
+      disabled={isRunning}
+      className={`w-12 h-12 rounded-full flex items-center justify-center border font-body relative transition
+        border-black dark:border-white
+        ${isRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}
+      title="Cycle Timer Mode"
+    >
+      {modeIndex === -1 ? (
+        <Clock3 className="w-5 h-5" />
+      ) : (
+        <span className="text-sm">{COUNTDOWN_VALUES[modeIndex]}s</span>
+      )}
+    </button>
+  );
+};
 
 export default Countdown;

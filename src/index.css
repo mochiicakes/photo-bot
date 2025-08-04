@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --accent: #000000;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}

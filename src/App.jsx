@@ -1,47 +1,42 @@
-import { useState, useEffect } from 'react'
-import PhotoCapturePage from './components/PhotoCapturePage'
-import CustomizationPage from './components/CustomizationPage'
-import Router, { Page } from './components/Router'
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PhotoCapturePage from './pages/PhotoCapturePage';
+import CustomizationPage from './pages/CustomizationPage';
 
-function App() {
-  const [photos, setPhotos] = useState([])
-  const [currentPage, setCurrentPage] = useState('capture')
-
-    // Load from localStorage on first render
-  useEffect(() => {
-    const saved = localStorage.getItem('photo-bot-photos')
-    if (saved) setPhotos(JSON.parse(saved))
-  }, [])
-
-  // Save to localStorage when photos change
-  useEffect(() => {
-    localStorage.setItem('photo-bot-photos', JSON.stringify(photos))
-  }, [photos])
+const App = () => {
+  const [photos, setPhotos] = useState([]);
+  const [targetCount, setTargetCount] = useState(1);
 
   return (
-    <>
-      {/* Google Font Import */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Just+Another+Hand&display=swap" 
-        rel="stylesheet"
-      />
-      <Router currentPage={currentPage}>
-        <Page name="capture">
-          <PhotoCapturePage
-            photos={photos}
-            setPhotos={setPhotos}
-            onNavigate={setCurrentPage}
-          />
-        </Page>
-        <Page name="customize">
-          <CustomizationPage
-            photos={photos}
-            onNavigate={setCurrentPage}
-          />
-        </Page>
-      </Router>
-    </>
-  )
-}
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={<Navigate to="/capture" replace />}
+        />
+        <Route
+          path="/capture"
+          element={
+            <PhotoCapturePage
+              photos={photos}
+              setPhotos={setPhotos}
+              targetCount={targetCount}
+              setTargetCount={setTargetCount}
+            />
+          }
+        />
+        <Route
+          path="/customize"
+          element={
+            <CustomizationPage
+              photos={photos}
+              onNavigate={() => window.history.back()}
+            />
+          }
+        />
+      </Routes>
+    </Router>
+  );
+};
 
-export default App
+export default App;

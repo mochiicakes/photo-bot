@@ -3,8 +3,14 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        header: ['"Playfair Display"', 'serif'],
+        body: ['"DM Sans"', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }
