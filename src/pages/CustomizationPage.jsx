@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
+import { useTheme } from '../context/ThemeContext';
 import { Download, Mail } from 'lucide-react'
 import { toPng } from 'html-to-image'
 
 const CustomizationPage = ({ photos, onNavigate }) => {
+  const { isDark } = useTheme();
   const previewRef = useRef(null)
   const [frameColor, setFrameColor] = useState('#f5f5f4')
   const [caption, setCaption] = useState('')
@@ -36,16 +38,14 @@ const CustomizationPage = ({ photos, onNavigate }) => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 p-8">
-      <div className="container mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 p-8">      <div className="container mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-light text-stone-800 mb-4 tracking-wide">
-            CUSTOMIZE YOUR STRIP
+          <h1 className="text-5xl font-light text-stone-800 dark:text-stone-100 mb-4 tracking-wide">            CUSTOMIZE YOUR STRIP
           </h1>
           <button
             onClick={() => onNavigate('capture')}
-            className="text-stone-600 hover:text-stone-800 text-lg font-medium transition-colors duration-200"
+            className="text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 text-lg font-medium transition-colors duration-200"
           >
             ← Back to Camera
           </button>
@@ -55,8 +55,7 @@ const CustomizationPage = ({ photos, onNavigate }) => {
           {/* Left Panel - Controls */}
           <div className="space-y-8">
             {/* Frame Colors */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-              <h3 className="text-xl font-medium mb-6 text-stone-800">Frame Color</h3>
+            <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-lg border border-stone-200 dark:border-stone-700">              <h3 className="text-xl font-medium mb-6 text-stone-800 dark:text-stone-200">Frame Color</h3>
               <div className="flex gap-4 justify-center">
                 {frameColors.map((color) => (
                   <button
@@ -72,14 +71,14 @@ const CustomizationPage = ({ photos, onNavigate }) => {
             </div>
 
             {/* Caption */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-              <h3 className="text-xl font-medium mb-4 text-stone-800">Add Caption</h3>
+          <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-lg border border-stone-200 dark:border-stone-700">
+            <h3 className="text-xl font-medium mb-6 text-stone-800 dark:text-stone-200">Add Caption</h3>
               <input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Enter your caption..."
-                className="w-full p-4 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-400 transition-all duration-200"
+                className="w-full p-4 border border-stone-200 dark:border-stone-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-400 transition-all duration-200 text-stone-800 dark:text-stone-200 bg-white dark:bg-stone-800 placeholder-stone-400 dark:placeholder-stone-500"
               />
             </div>
           </div>
@@ -112,8 +111,7 @@ const CustomizationPage = ({ photos, onNavigate }) => {
 
           {/* Right Panel - Actions */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-              <h3 className="text-xl font-medium mb-6 text-stone-800">Share Your Strip</h3>
+            <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-lg border border-stone-200 dark:border-stone-700">              <h3 className="text-xl font-medium mb-6 text-stone-800 dark:text-stone-200">Share Your Strip</h3>
               <div className="space-y-4">
                 <button
                   onClick={downloadPhotoStrip}

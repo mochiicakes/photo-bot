@@ -64,48 +64,56 @@ const PhotoCapturePage = () => {
   }
 
   const handleCountdownSequence = async () => {
-    setCountdownActive(true)
+  setCountdownActive(true)
+  const newCaptures = []
 
-    for (let i = 0; i < targetCount; i++) {
-      if (photos.length + i >= 4) break
+  for (let i = 0; i < targetCount; i++) {
+    if (photos.length + newCaptures.length >= 4) break
 
-      await new Promise((resolve) => {
-        const proceed = () => {
-          setCurrentCountdown(null) // Clear countdown
-          triggerFlash()
-          handleAutoCapture()
-          resolve()
-        }
-
-        if (countdownRef.current?.hasCountdown()) {
-          // Show countdown on video
-          const countdownSeconds = countdownRef.current.getCurrentTime?.() || 3
-          let timeLeft = countdownSeconds
-
-          const countdownInterval = setInterval(() => {
-            setCurrentCountdown(timeLeft)
-            timeLeft--
-
-            if (timeLeft < 0) {
-              clearInterval(countdownInterval)
-              proceed()
-            }
-          }, 1000)
-
-          setCurrentCountdown(countdownSeconds)
-        } else {
-          proceed()
-        }
-      })
-
-      if (i < targetCount - 1) {
-        await new Promise(res => setTimeout(res, 1000))
+    await new Promise((resolve) => {
+      const proceed = () => {
+        setCurrentCountdown(null)
+        triggerFlash()
+        const img = webcamRef.current?.capturePhoto()
+        if (img) newCaptures.push(img)
+        resolve()
       }
-    }
 
-    setCountdownActive(false)
-    setCurrentCountdown(null)
+      if (countdownRef.current?.hasCountdown()) {
+        let timeLeft = countdownRef.current.getCurrentTime?.() || 3
+        setCurrentCountdown(timeLeft)
+
+        const interval = setInterval(() => {
+          timeLeft--
+          setCurrentCountdown(timeLeft)
+          if (timeLeft < 0) {
+            clearInterval(interval)
+            proceed()
+          }
+        }, 1000)
+      } else {
+        proceed()
+      }
+    })
+
+    if (i < targetCount - 1) {
+      await new Promise(res => setTimeout(res, 1000))
+    }
   }
+
+  setPhotos(prev => {
+    const combined = [...prev, ...newCaptures]
+    return combined.slice(0, 4) // Cap at 4 photos max
+  })
+
+  setCountdownActive(false)
+  setCurrentCountdown(null)
+
+  // Optional: Auto-navigate to customize when target reached
+  if (photos.length + newCaptures.length >= targetCount) {
+    setTimeout(() => setCurrentPage('customize'), 800)
+  }
+}
 
   if (currentPage === 'customize') {
     return <CustomizationPage photos={photos} onNavigate={() => setCurrentPage('capture')} />
@@ -113,9 +121,12 @@ const PhotoCapturePage = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-500`}>
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 transition-all duration-500">
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 transition-all duration-500">        {/* Flash overlay */}
+        {/* Add this right after the header div */}
+        <div className="p-4 bg-red-500 dark:bg-blue-500 text-white text-center mb-4">
+          TEST: Red=Light, Blue=Dark. Current: {isDark ? 'DARK' : 'LIGHT'}
+        </div>
 
-        {/* Flash overlay */}
         {flashActive && (
           <div className="fixed inset-0 z-50 bg-white opacity-90 pointer-events-none transition-opacity duration-300" />
         )}
