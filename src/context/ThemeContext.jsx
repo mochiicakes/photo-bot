@@ -3,21 +3,20 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(() => {
-    try {
-        const saved = localStorage.getItem('theme');
-        return saved ? JSON.parse(saved) : false;
-    } catch {
-        return false;
-    }
-    });
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-        document.documentElement.classList.toggle('dark', isDark);
-        localStorage.setItem('theme', JSON.stringify(isDark));
-        console.log("isDark:", isDark);
-    }, [isDark]);
-
+    const htmlElement = document.documentElement;
+    
+    if (isDark) {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+    
+    console.log("Theme changed - isDark:", isDark);
+    console.log("HTML element classes:", htmlElement.className);
+  }, [isDark]);
 
   return (
     <ThemeContext.Provider value={{ isDark, setIsDark }}>
