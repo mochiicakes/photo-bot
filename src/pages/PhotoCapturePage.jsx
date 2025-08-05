@@ -47,7 +47,7 @@ const PhotoCapturePage = () => {
     if (photos.length >= 4) return
     const newPhotos = [...photos, image]
     setPhotos(newPhotos)
-    
+
     if (newPhotos.length === targetCount) {
       setTimeout(() => setCurrentPage('customize'), 800)
     }
@@ -121,12 +121,8 @@ const PhotoCapturePage = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-500`}>
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 transition-all duration-500">        {/* Flash overlay */}
-        {/* Add this right after the header div */}
-        <div className="p-4 bg-red-500 dark:bg-blue-500 text-white text-center mb-4">
-          TEST: Red=Light, Blue=Dark. Current: {isDark ? 'DARK' : 'LIGHT'}
-        </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 transition-all duration-500">
+        {/* Flash overlay */}
         {flashActive && (
           <div className="fixed inset-0 z-50 bg-white opacity-90 pointer-events-none transition-opacity duration-300" />
         )}
