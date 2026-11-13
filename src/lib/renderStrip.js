@@ -8,7 +8,7 @@ import { DECORATED_STYLES, drawFrameDecor } from './frameDecor'
 const cellWidthFor = (layout, count, aspect) => {
   const wide = aspect === 'landscape'
   if (layout === 'grid') return wide ? 300 : 254
-  if (layout === 'horizontal') return (count === 3 ? 200 : 240) + (wide ? 60 : 0)
+  if (layout === 'horizontal') return ({ 2: 240, 3: 200, 4: 180 }[count] ?? 200) + (wide ? 60 : 0)
   return wide ? 300 : 268
 }
 

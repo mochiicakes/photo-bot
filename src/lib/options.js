@@ -9,8 +9,8 @@ export const getAspect = (id) => ASPECTS.find((a) => a.id === id) ?? ASPECTS[0]
 
 // Which layouts make sense for each photo count.
 export const LAYOUTS = [
-  { id: 'vertical', label: 'Strip', counts: [1, 2, 3, 4] },
-  { id: 'horizontal', label: 'Side by side', counts: [2, 3] },
+  { id: 'vertical', label: 'Vertical', counts: [1, 2, 3, 4] },
+  { id: 'horizontal', label: 'Horizontal', counts: [2, 3, 4] },
   { id: 'grid', label: 'Collage', counts: [4] },
 ]
 

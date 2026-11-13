@@ -9,7 +9,7 @@ A cute, moonlit photobooth that runs entirely in the browser. Snap photos with y
 - **Camera or upload.** Take 1–4 shots with a 3/5/10s self-timer, or drag in your own photos.
 - **Screen light.** The screen glows pink, lilac, blue or white to light your face, like the Xiaohongshu screen-light trick. Turn your brightness all the way up.
 - **Photo shape.** 3:4 portrait, 1:1 square or 4:3 landscape, matched in the live preview and the export.
-- **Layouts.** Strip (vertical), side by side (2–3 photos), or a 2×2 collage (4 photos), framed or frameless.
+- **Layouts.** Vertical strip, horizontal strip (2–4 photos), or a 2×2 collage (4 photos), framed or frameless.
 - **41 filters in three groups.** They preview live on the camera and are baked into the export.
   - *Tsuki 月*: soft, airy originals inspired by Japanese and Xiaohongshu photo trends: Toumei 透明, Cream, Sakura 桜, Moonlight 月光, Peach 桃, Yume 夢, Film, Showa 昭和, Neon, Matcha 抹茶.
   - *Classic*: 26 popular photo-app looks (Clarendon, Valencia, X-Pro II, Moon…) adapted from [CSSgram](https://github.com/una/CSSgram) by Una Kravets (MIT).

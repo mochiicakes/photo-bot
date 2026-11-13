@@ -15,8 +15,8 @@ const Segmented = ({ options, value, onChange, label, disabled, size = 'md' }) =
           disabled={disabled || optDisabled}
           title={title}
           onClick={() => onChange(id)}
-          className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
-            size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+          className={`inline-flex items-center rounded-full font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+            size === 'sm' ? 'gap-1 px-2.5 py-1.5 text-sm' : 'gap-1.5 px-4 py-2'
           } ${selected ? 'bg-accent text-on-accent shadow' : 'text-ink-soft hover:text-ink'}`}
         >
           {Icon && <Icon className="w-4 h-4" />}

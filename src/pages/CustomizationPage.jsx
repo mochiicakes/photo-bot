@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import {
   Columns2,
   Columns3,
+  Columns4,
   Download,
   Frame,
   LayoutGrid,
@@ -48,7 +49,7 @@ const Checkbox = ({ checked, onChange, disabled, children }) => (
 const ROW_ICONS = { 1: RectangleVertical, 2: Rows2, 3: Rows3, 4: Rows4 }
 const layoutIcon = (id, count) => {
   if (id === 'grid') return LayoutGrid
-  if (id === 'horizontal') return count === 3 ? Columns3 : Columns2
+  if (id === 'horizontal') return { 2: Columns2, 3: Columns3, 4: Columns4 }[count] ?? Columns2
   return ROW_ICONS[count]
 }
 
@@ -91,7 +92,7 @@ const CustomizationPage = () => {
   const previewRef = useRef(null)
   const paneRef = useRef(null)
   const [stripRatio, setStripRatio] = useState(null) // height / width of the rendered strip
-  const [previewWidth, setPreviewWidth] = useState({ px: null, scrolls: false })
+  const [previewWidth, setPreviewWidth] = useState({ px: null })
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
   const [zoomUrl, setZoomUrl] = useState(null)
@@ -144,20 +145,16 @@ const CustomizationPage = () => {
     }
   }, [photos, options])
 
-  // Fit the strip to the preview pane; very tall strips keep a readable width and scroll
-  // inside the pane instead of shrinking to a sliver.
+  // Show the whole strip, as large as fits: the pane's width, and up to ~88% of the
+  // screen height (the options sit below, so the page itself scrolls to them).
   useEffect(() => {
     const pane = paneRef.current
     if (!pane || !stripRatio) return
-    const MIN_TALL_WIDTH = 300
     const measure = () => {
       const style = getComputedStyle(pane)
       const innerW = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-      // The pane is capped at 75vh; that's the height budget for the strip.
-      const innerH = window.innerHeight * 0.75 - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
-      const fitWidth = innerH / stripRatio
-      const px = Math.floor(Math.min(innerW, Math.max(fitWidth, Math.min(MIN_TALL_WIDTH, innerW))))
-      setPreviewWidth({ px, scrolls: px * stripRatio > innerH + 1 })
+      const innerH = window.innerHeight * 0.88 - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+      setPreviewWidth({ px: Math.floor(Math.min(innerW, innerH / stripRatio)) })
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -246,17 +243,17 @@ const CustomizationPage = () => {
 
         <div className="flex flex-col gap-8 lg:gap-10 max-w-6xl mx-auto">
           {/* Preview centred on top; options below so any layout shape has room. */}
-          <div className="w-full max-w-3xl mx-auto flex flex-col gap-4">
+          <div className="w-full max-w-5xl mx-auto flex flex-col gap-4">
             <div className="relative rounded-3xl border border-line bg-surface/40">
               <div
                 ref={paneRef}
-                className="flex justify-center overflow-y-auto overscroll-contain p-4 sm:p-6 max-h-[75vh] [scrollbar-width:thin]"
+                className="flex justify-center p-4 sm:p-6"
               >
                 <button
                   type="button"
                   onClick={openZoom}
                   aria-label="View strip larger"
-                  className={`shrink-0 cursor-zoom-in ${previewWidth.scrolls ? '' : 'my-auto'}`}
+                  className="shrink-0 cursor-zoom-in"
                   style={{ width: previewWidth.px ? `${previewWidth.px}px` : undefined }}
                 >
                   <canvas
