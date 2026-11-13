@@ -1,28 +1,24 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react'
 
-const ThemeContext = createContext();
+const ThemeContext = createContext()
+
+// index.html applies the saved/system theme before React mounts; start from that.
+const getInitialTheme = () => document.documentElement.classList.contains('dark')
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(getInitialTheme)
 
   useEffect(() => {
-    const htmlElement = document.documentElement;
-    
-    if (isDark) {
-      htmlElement.classList.add('dark');
-    } else {
-      htmlElement.classList.remove('dark');
+    document.documentElement.classList.toggle('dark', isDark)
+    try {
+      localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    } catch {
+      /* storage unavailable; theme just won't persist */
     }
-    
-    console.log("Theme changed - isDark:", isDark);
-    console.log("HTML element classes:", htmlElement.className);
-  }, [isDark]);
+  }, [isDark])
 
-  return (
-    <ThemeContext.Provider value={{ isDark, setIsDark }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
+  return <ThemeContext.Provider value={{ isDark, setIsDark }}>{children}</ThemeContext.Provider>
+}
 
-export const useTheme = () => useContext(ThemeContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTheme = () => useContext(ThemeContext)

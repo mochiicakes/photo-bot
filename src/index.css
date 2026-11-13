@@ -1,8 +1,29 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-h1, h2, h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+@theme {
+  --font-header: "Playfair Display", serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    background-color: #fafaf9;
+    color-scheme: light;
+  }
+  html.dark {
+    background-color: #1c1917;
+    color-scheme: dark;
+  }
+  body {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-header);
+    letter-spacing: 0.05em;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
 }
