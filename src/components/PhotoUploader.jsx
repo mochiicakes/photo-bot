@@ -31,7 +31,7 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount, aspect = 'portrai
   const [busy, setBusy] = useState(false)
 
   const remainingSlots = targetCount - photos.length
-  const shapeClass = aspect === 'square' ? 'aspect-square' : 'aspect-[3/4]'
+  const shapeClass = { square: 'aspect-square', landscape: 'aspect-[4/3]' }[aspect] ?? 'aspect-[3/4]'
 
   const handleFiles = async (files) => {
     setError('')

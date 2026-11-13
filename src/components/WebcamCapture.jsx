@@ -13,7 +13,8 @@ const ERROR_COPY = {
 }
 
 // Portrait gets a narrower box so the whole frame fits on a laptop screen.
-const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]' }
+const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]', landscape: 'max-w-[38rem]' }
+const ASPECT_CLASS = { portrait: 'aspect-[3/4]', square: 'aspect-square', landscape: 'aspect-[4/3]' }
 
 const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUpload, aspect = 'portrait' }) => {
   const videoRef = useRef(null)
@@ -75,7 +76,7 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
   return (
     <div className={`relative mx-auto w-full ${WIDTH_CLASS[aspect] ?? WIDTH_CLASS.portrait}`}>
       <div className="relative overflow-hidden rounded-3xl bg-surface p-2 shadow-2xl border border-line">
-        <div className={`relative w-full overflow-hidden rounded-2xl bg-paper-deep ${aspect === 'square' ? 'aspect-square' : 'aspect-[3/4]'}`}>
+        <div className={`relative w-full overflow-hidden rounded-2xl bg-paper-deep ${ASPECT_CLASS[aspect] ?? ASPECT_CLASS.portrait}`}>
           <video
             ref={videoRef}
             autoPlay

@@ -2,6 +2,7 @@
 export const ASPECTS = [
   { id: 'portrait', label: '3:4', ratio: 4 / 3 },
   { id: 'square', label: '1:1', ratio: 1 },
+  { id: 'landscape', label: '4:3', ratio: 3 / 4 },
 ]
 
 export const getAspect = (id) => ASPECTS.find((a) => a.id === id) ?? ASPECTS[0]
@@ -24,21 +25,21 @@ export const FRAME_STYLES = [
 ]
 
 export const FRAME_COLORS = [
-  { value: '#f6efe3', name: 'Rice paper' },
-  { value: '#ffffff', name: 'White' },
-  { value: '#1f1a17', name: 'Ink' },
-  { value: '#b8322a', name: 'Vermilion' },
-  { value: '#f8c9d8', name: 'Blush' },
+  { value: '#fdfdff', name: 'Moon white' },
+  { value: '#fff3d6', name: 'Cream' },
+  { value: '#141b3a', name: 'Night' },
+  { value: '#ffd76a', name: 'Moon yellow' },
+  { value: '#f8c9d8', name: 'Sakura' },
   { value: '#ddd0f5', name: 'Lilac' },
   { value: '#cfe2f7', name: 'Sky' },
-  { value: '#cfdfcf', name: 'Celadon' },
+  { value: '#d9e6c8', name: 'Matcha' },
 ]
 
-// Screen light (补光): the screen glows a soft color to light the face, Xiaohongshu-style.
+// Screen light: the screen glows a soft color to light the face, Xiaohongshu-style.
 export const SCREEN_LIGHTS = [
   { id: 'off', label: 'Off' },
   { id: 'pink', label: 'Pink', color: '#ffa3c8' },
-  { id: 'lilac', label: 'Lilac', color: '#cba6ff' },
-  { id: 'blue', label: 'Blue', color: '#9ccfff' },
+  { id: 'lilac', label: 'Lilac', color: '#b78aff' },
+  { id: 'blue', label: 'Blue', color: '#7cb8ff' },
   { id: 'white', label: 'White', color: '#fff8ef' },
 ]
