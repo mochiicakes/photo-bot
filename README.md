@@ -27,10 +27,10 @@ A cute, moonlit photobooth that runs entirely in your browser. Snap photos with 
 ### Designing the strip かざる
 - **Photo shape 比率.** 3:4 portrait, 1:1 square or 4:3 landscape.
 - **Layouts.** Vertical strip, horizontal strip (2–4 photos) or a 2×2 collage (4 photos).
-- **Frames.** Plain, Stars 星, Sakura 桜, Tsukimi 月見 (moon and susuki grass) and a glowing Full moon 満月, or no frame at all for edge-to-edge photos. The in-season frame gets a 旬 badge, and Full moon is marked 今夜だけ ("tonight only") on full-moon nights.
+- **Frames.** Framed (plain), Stars 星, Sakura 桜, Tsukimi 月見 (moon and susuki grass) and a glowing Full moon 満月, or no frame at all for edge-to-edge photos. The in-season frame gets a 旬 badge, and Full moon is marked 今夜だけ ("tonight only") on full-moon nights.
 - **Frame colors.** Moon white, Cream, Night, Moon yellow, Sakura, Lilac, Sky, Matcha, or any custom color.
 - **Caption ひとこと.** Up to 40 characters; Japanese and other scripts supported.
-- **Date line with tonight's moon.** For example `13 NOV 2026 ◐ 三日月`, with the real moon phase drawn as a little moon.
+- **Date line with tonight's moon.** For example `13 NOV 2026 · 三日月`, with tonight's actual moon phase drawn as a little moon between the date and its Japanese name.
 - **Film date stamp 日付.** The orange glowing disposable-camera date (`'26 11 13`) in the corner of each photo.
 - **Big live preview.** The whole strip is shown centered and as large as fits; tap it for a full-quality view.
 
