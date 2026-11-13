@@ -22,6 +22,7 @@ import { ASPECTS, FRAME_COLORS, FRAME_STYLES, layoutsFor, resolveLayout } from '
 import FilterPicker from '../components/FilterPicker'
 import { BeautySliders, StrengthSlider } from '../components/LookControls'
 import { useBeautySrc } from '../lib/useBeautySrc'
+import { trackEvent } from '../lib/analytics'
 import BrandHeader from '../components/BrandHeader'
 import Segmented from '../components/Segmented'
 
@@ -110,6 +111,16 @@ const CustomizationPage = () => {
 
   const exportBlob = async () => canvasToBlob(await renderStrip(photos, options, 3))
 
+  // Which looks people actually use (no photo data).
+  const saveDetails = () => ({
+    filter,
+    layout: activeLayout,
+    shape: aspect,
+    frame,
+    photos: count,
+    beauty: smooth > 0 || brighten > 0,
+  })
+
   const handleDownload = async () => {
     setError('')
     setBusy('download')
@@ -119,6 +130,7 @@ const CustomizationPage = () => {
       link.download = fileName()
       link.href = url
       link.click()
+      trackEvent('download', saveDetails())
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch {
       setError('Failed to create your strip. Please try again.')
@@ -133,6 +145,7 @@ const CustomizationPage = () => {
     try {
       const file = new File([await exportBlob()], fileName(), { type: 'image/png' })
       await navigator.share({ files: [file], title: 'My photo strip' })
+      trackEvent('share', saveDetails())
     } catch (err) {
       if (err?.name !== 'AbortError') setError('Sharing failed. Try downloading instead.')
     } finally {
