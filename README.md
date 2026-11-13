@@ -18,7 +18,9 @@ A cute, moonlit photobooth that runs entirely in the browser. Snap photos with y
 - **Beauty 美顔.** Live skin smoothing (美肌) and brightening (美白) with adjustable levels. A WebGL bilateral blur only touches skin tones, so eyes, hair and edges stay sharp. It runs on the live camera and again at export, so you can still change it after taking the photo.
 - **Customize.** Frame colors (or pick your own), a caption (Japanese and other scripts supported) and an optional date stamp.
 - **Save & share.** High-res PNG download, plus the native share sheet on supported devices (iOS/Android).
-- **Private by design.** Photos never leave the device. There's no backend and no uploads. The current session is kept in `sessionStorage` so a refresh doesn't lose your strip.
+- **Front/back camera and mirror.** Switch cameras on phones and turn mirroring on or off. The saved photo always matches the preview.
+- **Installable app.** Add it to your home screen; it works offline after the first visit.
+- **Private by design.** Photos never leave the device. There's no backend and no uploads. Photos are kept in IndexedDB for the current tab, so a refresh doesn't lose your strip.
 - Starry navy dark mode and a soft white light mode with yellow stars (follows your system, remembers your choice), plus a responsive mobile layout.
 
 ## Tech
@@ -38,6 +40,10 @@ npm run preview   # serve the production build
 ```
 
 Camera access requires a secure context: `localhost` or HTTPS.
+
+## Analytics
+
+[Vercel Web Analytics](https://vercel.com/docs/analytics) is cookie-free and records page views on every plan. Enable it in the Vercel project's **Analytics** tab. Download/share events (which filter, layout, shape and frame were used; never any photo data) are sent with `trackEvent` in [`src/lib/analytics.js`](src/lib/analytics.js), but Vercel only records custom events on the Pro plan and above.
 
 ## Deploy
 
