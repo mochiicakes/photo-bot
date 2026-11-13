@@ -14,6 +14,8 @@ A cute, moonlit photobooth that runs entirely in the browser. Snap photos with y
   - *Tsuki 月*: soft, airy originals inspired by Japanese and Xiaohongshu photo trends: Toumei 透明, Cream, Sakura 桜, Moonlight 月光, Peach 桃, Yume 夢, Film, Showa 昭和, Neon, Matcha 抹茶.
   - *Classic*: 26 popular photo-app looks (Clarendon, Valencia, X-Pro II, Moon…) adapted from [CSSgram](https://github.com/una/CSSgram) by Una Kravets (MIT).
   - *Basic*: B&W, Sepia, Warm, Vintage, Bold.
+  - A **strength** slider fades any filter from 0–100%.
+- **Beauty 美顔.** Live skin smoothing (美肌) and brightening (美白) with adjustable levels. A WebGL bilateral blur only touches skin tones, so eyes, hair and edges stay sharp. It runs on the live camera and again at export, so you can still change it after taking the photo.
 - **Customize.** Frame colors (or pick your own), a caption (Japanese and other scripts supported) and an optional date stamp.
 - **Save & share.** High-res PNG download, plus the native share sheet on supported devices (iOS/Android).
 - **Private by design.** Photos never leave the device. There's no backend and no uploads. The current session is kept in `sessionStorage` so a refresh doesn't lose your strip.
@@ -23,7 +25,7 @@ A cute, moonlit photobooth that runs entirely in the browser. Snap photos with y
 
 React 19 · Vite 7 · Tailwind CSS 4 · React Router 7 · lucide-react
 
-The strip is drawn on a `<canvas>` by [`src/lib/renderStrip.js`](src/lib/renderStrip.js). The preview and the download share that code, so what you see is what you get. Filters are defined once in [`src/lib/filters.js`](src/lib/filters.js) as blend-mode overlays plus CSS filter functions. Live previews render them with CSS (`mix-blend-mode` + `filter`). Exports draw the same overlays with canvas compositing, then apply the color functions pixel by pixel, because Safari doesn't support `ctx.filter`, so the saved PNG matches the preview. Layout, shape, frame and screen-light options live in [`src/lib/options.js`](src/lib/options.js), and theme colors are CSS variables in [`src/index.css`](src/index.css).
+The strip is drawn on a `<canvas>` by [`src/lib/renderStrip.js`](src/lib/renderStrip.js). The preview and the download share that code, so what you see is what you get. Filters are defined once in [`src/lib/filters.js`](src/lib/filters.js) as blend-mode overlays plus CSS filter functions. Live previews render them with CSS (`mix-blend-mode` + `filter`). Exports draw the same overlays with canvas compositing, then apply the color functions pixel by pixel, because Safari doesn't support `ctx.filter`, so the saved PNG matches the preview. The beauty pass is a WebGL shader in [`src/lib/beauty.js`](src/lib/beauty.js), applied to each full frame before cropping and filtering. Layout, shape, frame and screen-light options live in [`src/lib/options.js`](src/lib/options.js), and theme colors are CSS variables in [`src/index.css`](src/index.css).
 
 ## Development
 

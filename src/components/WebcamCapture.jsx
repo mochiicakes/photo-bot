@@ -1,6 +1,7 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Camera, CameraOff, RotateCcw, Upload } from 'lucide-react'
 import FilterLayer from './FilterLayer'
+import { createBeautyRenderer, fitSize } from '../lib/beauty'
 
 const ERROR_COPY = {
   denied: {
@@ -17,9 +18,27 @@ const ERROR_COPY = {
 const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]', landscape: 'max-w-[38rem]' }
 const ASPECT_CLASS = { portrait: 'aspect-[3/4]', square: 'aspect-square', landscape: 'aspect-[4/3]' }
 
-const WebcamCapture = ({ ref, onCapture, countdown, filter, disabled, onUseUpload, aspect = 'portrait' }) => {
+// Live frames are processed at this size (long side) to keep the beauty pass smooth.
+const LIVE_MAX_SIDE = 1280
+const MEDIA_CLASS = 'absolute inset-0 w-full h-full object-cover -scale-x-100'
+
+const WebcamCapture = ({
+  ref,
+  onCapture,
+  countdown,
+  filter,
+  strength = 1,
+  beauty,
+  disabled,
+  onUseUpload,
+  aspect = 'portrait',
+}) => {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
+  const liveRef = useRef(null) // beauty output (WebGL), shown under the filter
+  const baseRef = useRef(null) // 2D copy of it, shown unfiltered under the filter strength fade
+  const rendererRef = useRef(null)
+  const settingsRef = useRef({ beauty, strength })
   const [status, setStatus] = useState('loading')
   const [attempt, setAttempt] = useState(0)
 
@@ -72,20 +91,80 @@ const WebcamCapture = ({ ref, onCapture, countdown, filter, disabled, onUseUploa
     }
   }, [attempt])
 
+  useEffect(() => {
+    settingsRef.current = { beauty, strength }
+  }, [beauty, strength])
+
+  // Live pipeline: each camera frame -> beauty shader -> canvas (+ an unfiltered copy).
+  useEffect(() => {
+    if (status !== 'ready') return
+    const video = videoRef.current
+    const live = liveRef.current
+    const base = baseRef.current
+    if (rendererRef.current === null) {
+      try {
+        rendererRef.current = createBeautyRenderer(live) ?? false
+      } catch {
+        rendererRef.current = false
+      }
+    }
+    const renderer = rendererRef.current
+    const liveCtx = renderer ? null : live.getContext('2d') // no WebGL: plain copy, no beauty
+    const baseCtx = base.getContext('2d')
+    const useVideoCallback = 'requestVideoFrameCallback' in video
+    let stopped = false
+    let handle
+
+    const draw = () => {
+      if (stopped) return
+      if (video.videoWidth) {
+        const { width, height } = fitSize(video, LIVE_MAX_SIDE)
+        const { beauty: settings, strength: mix } = settingsRef.current
+        if (renderer) {
+          renderer.render(video, width, height, settings)
+        } else {
+          if (live.width !== width) live.width = width
+          if (live.height !== height) live.height = height
+          liveCtx.drawImage(video, 0, 0, width, height)
+        }
+        if (mix < 1) {
+          if (base.width !== width) base.width = width
+          if (base.height !== height) base.height = height
+          baseCtx.drawImage(live, 0, 0)
+        }
+      }
+      handle = useVideoCallback ? video.requestVideoFrameCallback(draw) : requestAnimationFrame(draw)
+    }
+    draw()
+
+    return () => {
+      stopped = true
+      if (useVideoCallback) video.cancelVideoFrameCallback(handle)
+      else cancelAnimationFrame(handle)
+    }
+  }, [status])
+
   const error = ERROR_COPY[status]
 
   return (
     <div className={`relative mx-auto w-full ${WIDTH_CLASS[aspect] ?? WIDTH_CLASS.portrait}`}>
       <div className="relative overflow-hidden rounded-3xl bg-surface p-2 shadow-2xl border border-line">
         <div className={`relative w-full overflow-hidden rounded-2xl bg-paper-deep ${ASPECT_CLASS[aspect] ?? ASPECT_CLASS.portrait}`}>
-          <FilterLayer filter={filter} className={`absolute inset-0 ${status === 'ready' ? '' : 'invisible'}`}>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute inset-0 w-full h-full object-cover -scale-x-100"
-            />
+          {/* Source only; what you see is the processed canvas. Kept rendered so it keeps decoding. */}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute w-px h-px opacity-0 pointer-events-none"
+          />
+          <FilterLayer
+            filter={filter}
+            strength={strength}
+            base={<canvas ref={baseRef} className={MEDIA_CLASS} />}
+            className={`absolute inset-0 ${status === 'ready' ? '' : 'invisible'}`}
+          >
+            <canvas ref={liveRef} className={MEDIA_CLASS} />
           </FilterLayer>
           <canvas ref={canvasRef} className="hidden" />
 

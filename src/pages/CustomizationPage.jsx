@@ -20,6 +20,8 @@ import { usePhotoSession } from '../context/PhotoSessionContext'
 import { renderStrip, canvasToBlob } from '../lib/renderStrip'
 import { ASPECTS, FRAME_COLORS, FRAME_STYLES, layoutsFor, resolveLayout } from '../lib/options'
 import FilterPicker from '../components/FilterPicker'
+import { BeautySliders, StrengthSlider } from '../components/LookControls'
+import { useBeautySrc } from '../lib/useBeautySrc'
 import BrandHeader from '../components/BrandHeader'
 import Segmented from '../components/Segmented'
 
@@ -50,17 +52,31 @@ const PanelTitle = ({ children, ja }) => (
 
 const CustomizationPage = () => {
   const navigate = useNavigate()
-  const { photos, filter, layout, aspect, frame, frameColor, caption, showDate, update, clearPhotos } =
-    usePhotoSession()
+  const {
+    photos,
+    filter,
+    filterStrength,
+    smooth,
+    brighten,
+    layout,
+    aspect,
+    frame,
+    frameColor,
+    caption,
+    showDate,
+    update,
+    clearPhotos,
+  } = usePhotoSession()
   const previewRef = useRef(null)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
   const shareSupported = useMemo(canShareFiles, [])
 
   const options = useMemo(
-    () => ({ layout, filter, frameColor, caption, showDate, aspect, frame }),
-    [layout, filter, frameColor, caption, showDate, aspect, frame],
+    () => ({ layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, aspect, frame }),
+    [layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, aspect, frame],
   )
+  const previewSrc = useBeautySrc(photos[0], { smooth, brighten })
   const framed = frame !== 'none'
   const count = photos.length
   const activeLayout = resolveLayout(layout, count)
@@ -69,18 +85,22 @@ const CustomizationPage = () => {
   useEffect(() => {
     if (photos.length === 0) return
     let cancelled = false
-    renderStrip(photos, options, 2)
-      .then((canvas) => {
-        const target = previewRef.current
-        if (cancelled || !target) return
-        target.width = canvas.width
-        target.height = canvas.height
-        target.style.maxWidth = `min(100%, ${canvas.width / 2}px)`
-        target.getContext('2d').drawImage(canvas, 0, 0)
-      })
-      .catch(() => !cancelled && setError('Could not render the preview.'))
+    // Short debounce so dragging a slider doesn't re-render the strip on every tick.
+    const timer = setTimeout(() => {
+      renderStrip(photos, options, 2)
+        .then((canvas) => {
+          const target = previewRef.current
+          if (cancelled || !target) return
+          target.width = canvas.width
+          target.height = canvas.height
+          target.style.maxWidth = `min(100%, ${canvas.width / 2}px)`
+          target.getContext('2d').drawImage(canvas, 0, 0)
+        })
+        .catch(() => !cancelled && setError('Could not render the preview.'))
+    }, 60)
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
   }, [photos, options])
 
@@ -181,7 +201,15 @@ const CustomizationPage = () => {
 
             <section className="panel">
               <PanelTitle ja="フィルター">Filter</PanelTitle>
-              <FilterPicker value={filter} onChange={(id) => update({ filter: id })} previewSrc={photos[0]} />
+              <FilterPicker value={filter} onChange={(id) => update({ filter: id })} previewSrc={previewSrc} />
+              <div className="mt-3 flex justify-center">
+                <StrengthSlider filter={filter} value={filterStrength} onChange={(v) => update({ filterStrength: v })} />
+              </div>
+            </section>
+
+            <section className="panel">
+              <PanelTitle ja="美顔">Beauty</PanelTitle>
+              <BeautySliders smooth={smooth} brighten={brighten} onChange={update} />
             </section>
 
             <section className="panel">
