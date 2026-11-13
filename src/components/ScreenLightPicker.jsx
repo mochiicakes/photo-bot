@@ -1,7 +1,7 @@
 import { Ban, Sun } from 'lucide-react'
 import { SCREEN_LIGHTS } from '../lib/options'
 
-// Pick a glow color for the screen-as-ring-light effect (补光).
+// Pick a glow color for the screen-as-ring-light effect.
 const ScreenLightPicker = ({ value, onChange, disabled }) => (
   <div className="flex flex-col items-center gap-2">
     <div className="flex items-center gap-2" role="radiogroup" aria-label="Screen light color">

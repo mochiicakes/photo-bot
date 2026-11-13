@@ -2,10 +2,11 @@ import { applyFilterToImageData } from './filters'
 import { getAspect, resolveLayout } from './options'
 
 // Base cell width (CSS px at scale 1) per layout; height follows the photo aspect.
-const cellWidthFor = (layout, count) => {
-  if (layout === 'grid') return 254
-  if (layout === 'horizontal') return count === 3 ? 200 : 240
-  return 268
+const cellWidthFor = (layout, count, aspect) => {
+  const wide = aspect === 'landscape'
+  if (layout === 'grid') return wide ? 300 : 254
+  if (layout === 'horizontal') return (count === 3 ? 200 : 240) + (wide ? 60 : 0)
+  return wide ? 300 : 268
 }
 
 const getGeometry = ({ layout, count, aspect, framed, hasFooterText }) => {
@@ -13,7 +14,7 @@ const getGeometry = ({ layout, count, aspect, framed, hasFooterText }) => {
   const rows = layout === 'grid' ? 2 : layout === 'horizontal' ? 1 : count
   const pad = framed ? (layout === 'grid' ? 20 : 16) : 0
   const gap = framed ? 12 : 0
-  const w = cellWidthFor(layout, count)
+  const w = cellWidthFor(layout, count, aspect)
   const h = Math.round(w * getAspect(aspect).ratio)
 
   const cells = Array.from({ length: count }, (_, i) => ({
@@ -105,7 +106,7 @@ const fitFont = (ctx, text, weight, family, size, maxWidth) => {
 export const formatStripDate = (date = new Date()) =>
   date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase()
 
-const CAPTION_FONT = '"Noto Serif SC", "Songti SC", serif'
+const CAPTION_FONT = '"Zen Maru Gothic", "DM Sans", sans-serif'
 
 /**
  * Draws the finished photo strip and returns a canvas.
@@ -130,7 +131,7 @@ export const renderStrip = async (
 
   const [images] = await Promise.all([
     Promise.all(photos.map(loadImage)),
-    text && document.fonts?.load?.(`400 20px ${CAPTION_FONT}`, text).catch(() => {}),
+    text && document.fonts?.load?.(`500 20px ${CAPTION_FONT}`, text).catch(() => {}),
     withDate && document.fonts?.load?.('500 11px "DM Sans"').catch(() => {}),
   ])
 
@@ -155,7 +156,7 @@ export const renderStrip = async (
   })
 
   if (hasFooterText) {
-    const ink = isLight(frameColor) ? '41, 29, 22' : '246, 239, 227'
+    const ink = isLight(frameColor) ? '29, 37, 82' : '253, 253, 255'
     const cx = geo.width / 2
     const maxWidth = geo.width - geo.pad * 2
     ctx.textAlign = 'center'
@@ -164,7 +165,7 @@ export const renderStrip = async (
     const captionY = withDate && text ? geo.footerTop + 34 : geo.footerTop + 42
     if (text) {
       ctx.fillStyle = `rgb(${ink})`
-      fitFont(ctx, text, 400, CAPTION_FONT, 20, maxWidth)
+      fitFont(ctx, text, 500, CAPTION_FONT, 20, maxWidth)
       ctx.fillText(text, cx, captionY)
     }
     if (withDate) {
