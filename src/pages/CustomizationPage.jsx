@@ -6,6 +6,7 @@ import {
   Download,
   Frame,
   LayoutGrid,
+  RectangleHorizontal,
   RectangleVertical,
   RotateCcw,
   Rows2,
@@ -22,7 +23,7 @@ import FilterPicker from '../components/FilterPicker'
 import BrandHeader from '../components/BrandHeader'
 import Segmented from '../components/Segmented'
 
-const ASPECT_ICONS = { portrait: RectangleVertical, square: Square }
+const ASPECT_ICONS = { portrait: RectangleVertical, square: Square, landscape: RectangleHorizontal }
 const FRAME_ICONS = { classic: Frame, none: SquareDashed }
 const ROW_ICONS = { 1: RectangleVertical, 2: Rows2, 3: Rows3, 4: Rows4 }
 const layoutIcon = (id, count) => {
@@ -31,7 +32,7 @@ const layoutIcon = (id, count) => {
   return ROW_ICONS[count]
 }
 
-const fileName = () => `photo-bot-${new Date().toISOString().slice(0, 10)}.png`
+const fileName = () => `tsuki-cam-${new Date().toISOString().slice(0, 10)}.png`
 
 const canShareFiles = () => {
   try {
@@ -41,10 +42,10 @@ const canShareFiles = () => {
   }
 }
 
-const PanelTitle = ({ children, zh }) => (
-  <h2 className="panel-title">
-    {children} <small>{zh}</small>
-  </h2>
+const PanelTitle = ({ children, ja }) => (
+  <h3 className="panel-title">
+    {children} <small>{ja}</small>
+  </h3>
 )
 
 const CustomizationPage = () => {
@@ -125,10 +126,13 @@ const CustomizationPage = () => {
   return (
     <div className="min-h-screen px-4 py-6 md:p-8">
       <main className="container mx-auto">
-        <BrandHeader title="CUSTOMIZE" subtitle="装裱 · make it yours" />
+        <BrandHeader />
+        <h2 className="font-header text-2xl md:text-3xl font-bold text-ink mb-2">
+          Customize <span className="text-gold text-xl md:text-2xl">かざる</span>
+        </h2>
         <button
           onClick={() => navigate('/capture')}
-          className="-mt-4 mb-8 text-ink-soft hover:text-accent font-medium transition-colors duration-200"
+          className="mb-8 text-ink-soft hover:text-accent font-medium transition-colors duration-200"
         >
           ← Back to camera
         </button>
@@ -147,7 +151,7 @@ const CustomizationPage = () => {
 
           <div className="space-y-6 lg:order-1">
             <section className="panel">
-              <PanelTitle zh="版式">Layout</PanelTitle>
+              <PanelTitle ja="レイアウト">Layout</PanelTitle>
               <div className="space-y-4">
                 <Segmented
                   size="sm"
@@ -176,12 +180,12 @@ const CustomizationPage = () => {
             </section>
 
             <section className="panel">
-              <PanelTitle zh="滤镜">Filter</PanelTitle>
+              <PanelTitle ja="フィルター">Filter</PanelTitle>
               <FilterPicker value={filter} onChange={(id) => update({ filter: id })} previewSrc={photos[0]} />
             </section>
 
             <section className="panel">
-              <PanelTitle zh="相框">Frame</PanelTitle>
+              <PanelTitle ja="フレーム">Frame</PanelTitle>
               <Segmented
                 size="sm"
                 label="Frame style"
@@ -223,14 +227,14 @@ const CustomizationPage = () => {
             </section>
 
             <section className="panel">
-              <PanelTitle zh="题字">Caption</PanelTitle>
+              <PanelTitle ja="ひとこと">Caption</PanelTitle>
               <input
                 type="text"
                 value={caption}
                 maxLength={40}
                 disabled={!framed}
                 onChange={(e) => update({ caption: e.target.value })}
-                placeholder="Enter your caption… 写点什么"
+                placeholder="Write a caption… ひとこと"
                 aria-label="Caption"
                 className="w-full p-4 border border-line rounded-xl bg-paper text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 disabled:opacity-50"
               />
@@ -250,7 +254,7 @@ const CustomizationPage = () => {
 
           <div className="space-y-6 lg:order-3">
             <section className="panel">
-              <PanelTitle zh="保存">Save your strip</PanelTitle>
+              <PanelTitle ja="保存">Save your strip</PanelTitle>
               <div className="space-y-3">
                 <button
                   onClick={handleDownload}

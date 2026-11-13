@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, RectangleVertical, RotateCcw, Square, Upload, X } from 'lucide-react'
+import { Camera, RectangleHorizontal, RectangleVertical, RotateCcw, Square, Upload, X } from 'lucide-react'
 import { usePhotoSession } from '../context/PhotoSessionContext'
 import { filterToCss } from '../lib/filters'
 import { ASPECTS, SCREEN_LIGHTS } from '../lib/options'
@@ -15,7 +15,7 @@ import Segmented from '../components/Segmented'
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-const ASPECT_ICONS = { portrait: RectangleVertical, square: Square }
+const ASPECT_ICONS = { portrait: RectangleVertical, square: Square, landscape: RectangleHorizontal }
 
 const enterFullscreen = () => {
   if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
@@ -112,7 +112,7 @@ const PhotoCapturePage = () => {
     if (photos.length + newPhotos.length >= targetCount) goToCustomize(600)
   }
 
-  const thumbClass = aspect === 'square' ? 'w-14 h-14' : 'w-12 h-16'
+  const thumbClass = { square: 'w-14 h-14', landscape: 'w-16 h-12' }[aspect] ?? 'w-12 h-16'
 
   return (
     <div className="min-h-screen">
@@ -123,7 +123,7 @@ const PhotoCapturePage = () => {
       {glowing && (
         <button
           onClick={() => changeLight('off')}
-          className="fixed top-4 right-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-[#3a2a20] shadow-lg backdrop-blur hover:bg-white"
+          className="fixed top-4 right-4 z-[45] inline-flex items-center gap-1.5 rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-[#3a2a20] shadow-lg backdrop-blur hover:bg-white"
         >
           <X className="w-4 h-4" /> Turn off light
         </button>
@@ -140,8 +140,8 @@ const PhotoCapturePage = () => {
             onChange={switchMode}
             disabled={isCapturing}
             options={[
-              { id: 'camera', label: 'Camera 拍照', icon: Camera },
-              { id: 'upload', label: 'Upload 上传', icon: Upload },
+              { id: 'camera', label: <>Camera <span className="hidden sm:inline">カメラ</span></>, icon: Camera },
+              { id: 'upload', label: <>Upload <span className="hidden sm:inline">アップロード</span></>, icon: Upload },
             ]}
           />
         </div>
@@ -183,13 +183,13 @@ const PhotoCapturePage = () => {
             <div className="panel max-w-2xl mx-auto mb-6 space-y-5">
               <div className="flex flex-col items-center gap-2">
                 <span className="text-sm font-medium text-ink">
-                  Screen light <span className="text-gold tracking-widest">补光</span>
+                  Screen light <span className="text-gold">ライト</span>
                 </span>
                 <ScreenLightPicker value={lightId} onChange={changeLight} disabled={isCapturing} />
               </div>
               <div className="flex flex-col items-center gap-2">
                 <span className="text-sm font-medium text-ink">
-                  Photo shape <span className="text-gold tracking-widest">比例</span>
+                  Photo shape <span className="text-gold">比率</span>
                 </span>
                 <Segmented
                   size="sm"
@@ -202,7 +202,7 @@ const PhotoCapturePage = () => {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <span className="text-sm font-medium text-ink">
-                  Filter <span className="text-gold tracking-widest">滤镜</span>
+                  Filter <span className="text-gold">フィルター</span>
                 </span>
                 <FilterPicker value={filter} onChange={(id) => update({ filter: id })} disabled={isCapturing} />
               </div>

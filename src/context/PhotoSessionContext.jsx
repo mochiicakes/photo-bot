@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE_KEY = 'photo-bot-session'
+const STORAGE_KEY = 'tsuki-cam-session'
 
 const DEFAULTS = {
   photos: [],
@@ -9,7 +9,7 @@ const DEFAULTS = {
   layout: 'vertical',
   aspect: 'portrait',
   frame: 'classic',
-  frameColor: '#f6efe3',
+  frameColor: '#fdfdff',
   caption: '',
   showDate: true,
 }
