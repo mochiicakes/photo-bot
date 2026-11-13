@@ -1,29 +1,133 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Chinese-inspired palette: rice paper + vermilion (light), black lacquer + gold (dark). */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --color-gold: var(--gold);
+}
+
 @theme {
-  --font-header: "Playfair Display", serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-header: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-brush: "Ma Shan Zheng", "Noto Serif SC", serif;
+  --font-body: "DM Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+:root {
+  --paper: #f6efe3;
+  --paper-deep: #ecdfc9;
+  --surface: #fffaf2;
+  --ink: #2b1d16;
+  --ink-soft: #7a6455;
+  --line: #e2d1b6;
+  --accent: #b8322a;
+  --accent-strong: #9a271f;
+  --on-accent: #fff7ec;
+  --gold: #a9823f;
+  /* 祥云 auspicious-cloud motif */
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120' viewBox='0 0 180 120'%3E%3Cg fill='none' stroke='%23a9823f' stroke-opacity='.16' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M20 40a3 3 0 0 1 6 0a6 6 0 0 1-12 0a9 9 0 0 1 18 0c0 9 26 9 26 0a9 9 0 0 1 18 0a6 6 0 0 1-12 0a3 3 0 0 1 6 0'/%3E%3Cpath d='M110 100a3 3 0 0 1 6 0a6 6 0 0 1-12 0a9 9 0 0 1 18 0c0 9 26 9 26 0a9 9 0 0 1 18 0a6 6 0 0 1-12 0a3 3 0 0 1 6 0'/%3E%3C/g%3E%3C/svg%3E");
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #14100e;
+  --paper-deep: #1f1613;
+  --surface: #221a16;
+  --ink: #f3e6d0;
+  --ink-soft: #b49c80;
+  --line: #3d2e25;
+  --accent: #d0453a;
+  --accent-strong: #e05a4e;
+  --on-accent: #fff7ec;
+  --gold: #d4b06a;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120' viewBox='0 0 180 120'%3E%3Cg fill='none' stroke='%23d4b06a' stroke-opacity='.09' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M20 40a3 3 0 0 1 6 0a6 6 0 0 1-12 0a9 9 0 0 1 18 0c0 9 26 9 26 0a9 9 0 0 1 18 0a6 6 0 0 1-12 0a3 3 0 0 1 6 0'/%3E%3Cpath d='M110 100a3 3 0 0 1 6 0a6 6 0 0 1-12 0a9 9 0 0 1 18 0c0 9 26 9 26 0a9 9 0 0 1 18 0a6 6 0 0 1-12 0a3 3 0 0 1 6 0'/%3E%3C/g%3E%3C/svg%3E");
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    background-color: #fafaf9;
-    color-scheme: light;
-  }
-  html.dark {
-    background-color: #1c1917;
-    color-scheme: dark;
+    background-color: var(--paper);
   }
   body {
     font-family: var(--font-body);
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image: var(--pattern), linear-gradient(180deg, var(--paper), var(--paper-deep));
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3 {
     font-family: var(--font-header);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
   button:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Card with gold lattice-style corner marks. */
+  .panel {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid var(--line);
+    background-color: var(--surface);
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px -18px rgb(60 30 10 / 0.35);
+    background-image:
+      linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold)),
+      linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold)),
+      linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold)),
+      linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold));
+    background-repeat: no-repeat;
+    background-size: 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px, 14px 1.5px, 1.5px 14px;
+    background-position:
+      8px 8px, 8px 8px,
+      calc(100% - 8px) 8px, calc(100% - 8px) 8px,
+      8px calc(100% - 8px), 8px calc(100% - 8px),
+      calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) calc(100% - 8px);
+  }
+
+  .panel-title {
+    font-family: var(--font-header);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .panel-title small {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+
+  .btn-primary {
+    background-color: var(--accent);
+    color: var(--on-accent);
+    box-shadow: 0 8px 20px -10px var(--accent);
+  }
+  .btn-primary:not(:disabled):hover {
+    background-color: var(--accent-strong);
+  }
+  .btn-secondary {
+    background-color: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .btn-secondary:not(:disabled):hover {
+    color: var(--ink);
+    border-color: var(--gold);
   }
 }

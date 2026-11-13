@@ -6,8 +6,10 @@ const DEFAULTS = {
   photos: [],
   targetCount: 4,
   filter: 'none',
-  layout: 'strip',
-  frameColor: '#f5f5f4',
+  layout: 'vertical',
+  aspect: 'portrait',
+  frame: 'classic',
+  frameColor: '#f6efe3',
   caption: '',
   showDate: true,
 }

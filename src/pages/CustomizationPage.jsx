@@ -1,22 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Download, Share2, RotateCcw } from 'lucide-react'
+import {
+  Columns2,
+  Columns3,
+  Download,
+  Frame,
+  LayoutGrid,
+  RectangleVertical,
+  RotateCcw,
+  Rows2,
+  Rows3,
+  Rows4,
+  Share2,
+  Square,
+  SquareDashed,
+} from 'lucide-react'
 import { usePhotoSession } from '../context/PhotoSessionContext'
-import { LAYOUTS, renderStrip, canvasToBlob } from '../lib/renderStrip'
+import { renderStrip, canvasToBlob } from '../lib/renderStrip'
+import { ASPECTS, FRAME_COLORS, FRAME_STYLES, layoutsFor, resolveLayout } from '../lib/options'
 import FilterPicker from '../components/FilterPicker'
-import ThemeToggle from '../components/ThemeToggle'
+import BrandHeader from '../components/BrandHeader'
+import Segmented from '../components/Segmented'
 
-const FRAME_COLORS = [
-  { value: '#f5f5f4', name: 'Stone' },
-  { value: '#1c1917', name: 'Charcoal' },
-  { value: '#fecaca', name: 'Rose' },
-  { value: '#ddd6fe', name: 'Lavender' },
-  { value: '#bbf7d0', name: 'Mint' },
-  { value: '#fef3c7', name: 'Butter' },
-]
-
-const panelClass = 'bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-lg border border-stone-200 dark:border-stone-700'
-const panelTitleClass = 'text-xl font-medium mb-4 text-stone-800 dark:text-stone-200'
+const ASPECT_ICONS = { portrait: RectangleVertical, square: Square }
+const FRAME_ICONS = { classic: Frame, none: SquareDashed }
+const ROW_ICONS = { 1: RectangleVertical, 2: Rows2, 3: Rows3, 4: Rows4 }
+const layoutIcon = (id, count) => {
+  if (id === 'grid') return LayoutGrid
+  if (id === 'horizontal') return count === 3 ? Columns3 : Columns2
+  return ROW_ICONS[count]
+}
 
 const fileName = () => `photo-bot-${new Date().toISOString().slice(0, 10)}.png`
 
@@ -28,18 +41,29 @@ const canShareFiles = () => {
   }
 }
 
+const PanelTitle = ({ children, zh }) => (
+  <h2 className="panel-title">
+    {children} <small>{zh}</small>
+  </h2>
+)
+
 const CustomizationPage = () => {
   const navigate = useNavigate()
-  const { photos, filter, layout, frameColor, caption, showDate, update, clearPhotos } = usePhotoSession()
+  const { photos, filter, layout, aspect, frame, frameColor, caption, showDate, update, clearPhotos } =
+    usePhotoSession()
   const previewRef = useRef(null)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
   const shareSupported = useMemo(canShareFiles, [])
 
   const options = useMemo(
-    () => ({ layout, filter, frameColor, caption, showDate }),
-    [layout, filter, frameColor, caption, showDate],
+    () => ({ layout, filter, frameColor, caption, showDate, aspect, frame }),
+    [layout, filter, frameColor, caption, showDate, aspect, frame],
   )
+  const framed = frame !== 'none'
+  const count = photos.length
+  const activeLayout = resolveLayout(layout, count)
+  const availableLayouts = layoutsFor(count)
 
   useEffect(() => {
     if (photos.length === 0) return
@@ -50,6 +74,7 @@ const CustomizationPage = () => {
         if (cancelled || !target) return
         target.width = canvas.width
         target.height = canvas.height
+        target.style.maxWidth = `min(100%, ${canvas.width / 2}px)`
         target.getContext('2d').drawImage(canvas, 0, 0)
       })
       .catch(() => !cancelled && setError('Could not render the preview.'))
@@ -58,7 +83,7 @@ const CustomizationPage = () => {
     }
   }, [photos, options])
 
-  if (photos.length === 0) return <Navigate to="/capture" replace />
+  if (count === 0) return <Navigate to="/capture" replace />
 
   const exportBlob = async () => canvasToBlob(await renderStrip(photos, options, 3))
 
@@ -98,136 +123,139 @@ const CustomizationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 px-4 py-6 md:p-8">
+    <div className="min-h-screen px-4 py-6 md:p-8">
       <main className="container mx-auto">
-        <header className="relative text-center mb-8 md:mb-12">
-          <div className="absolute right-0 top-0">
-            <ThemeToggle />
-          </div>
-          <h1 className="text-3xl md:text-5xl font-light text-stone-800 dark:text-stone-100 mb-4 tracking-wide px-14">
-            CUSTOMIZE YOUR STRIP
-          </h1>
-          <button
-            onClick={() => navigate('/capture')}
-            className="text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 text-lg font-medium transition-colors duration-200"
-          >
-            ← Back to camera
-          </button>
-        </header>
+        <BrandHeader title="CUSTOMIZE" subtitle="装裱 · make it yours" />
+        <button
+          onClick={() => navigate('/capture')}
+          className="-mt-4 mb-8 text-ink-soft hover:text-accent font-medium transition-colors duration-200"
+        >
+          ← Back to camera
+        </button>
 
-        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-10 max-w-7xl mx-auto">
           {/* Preview first on mobile */}
           <div className="flex justify-center items-start lg:order-2">
             <canvas
               ref={previewRef}
               aria-label="Photo strip preview"
               role="img"
-              className="rounded-lg shadow-2xl h-auto"
-              style={{ width: layout === 'grid' && photos.length === 4 ? 'min(100%, 420px)' : 'min(100%, 280px)' }}
+              className="shadow-2xl w-auto h-auto"
+              style={{ maxHeight: '78vh' }}
             />
           </div>
 
           <div className="space-y-6 lg:order-1">
-            <section className={panelClass}>
-              <h2 className={panelTitleClass}>Filter</h2>
+            <section className="panel">
+              <PanelTitle zh="版式">Layout</PanelTitle>
+              <div className="space-y-4">
+                <Segmented
+                  size="sm"
+                  label="Photo shape"
+                  value={aspect}
+                  onChange={(id) => update({ aspect: id })}
+                  options={ASPECTS.map((a) => ({ id: a.id, label: a.label, icon: ASPECT_ICONS[a.id] }))}
+                />
+                <div>
+                  <Segmented
+                    size="sm"
+                    label="Layout"
+                    value={activeLayout}
+                    onChange={(id) => update({ layout: id })}
+                    options={availableLayouts.map((l) => ({
+                      id: l.id,
+                      label: count === 1 ? 'Single' : l.label,
+                      icon: layoutIcon(l.id, count),
+                    }))}
+                  />
+                  {count !== 4 && (
+                    <p className="mt-2 text-xs text-ink-soft">Take 4 photos to unlock the collage layout.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="panel">
+              <PanelTitle zh="滤镜">Filter</PanelTitle>
               <FilterPicker value={filter} onChange={(id) => update({ filter: id })} previewSrc={photos[0]} />
             </section>
 
-            <section className={panelClass}>
-              <h2 className={panelTitleClass}>Layout</h2>
-              <div className="flex gap-3">
-                {LAYOUTS.map((l) => {
-                  const unavailable = l.requires && photos.length !== l.requires
-                  const selected = !unavailable && (layout === l.id || (l.id === 'strip' && photos.length !== 4))
-                  return (
+            <section className="panel">
+              <PanelTitle zh="相框">Frame</PanelTitle>
+              <Segmented
+                size="sm"
+                label="Frame style"
+                value={frame}
+                onChange={(id) => update({ frame: id })}
+                options={FRAME_STYLES.map((f) => ({ id: f.id, label: f.label, icon: FRAME_ICONS[f.id] }))}
+              />
+              {framed && (
+                <div className="mt-4 flex flex-wrap gap-3" role="radiogroup" aria-label="Frame color">
+                  {FRAME_COLORS.map(({ value, name }) => (
                     <button
-                      key={l.id}
-                      onClick={() => update({ layout: l.id })}
-                      disabled={unavailable}
-                      aria-pressed={selected}
-                      title={unavailable ? `Needs exactly ${l.requires} photos` : undefined}
-                      className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
-                        selected
-                          ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-md'
-                          : 'bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-700'
+                      key={value}
+                      role="radio"
+                      aria-checked={frameColor === value}
+                      aria-label={name}
+                      title={name}
+                      onClick={() => update({ frameColor: value })}
+                      className={`w-10 h-10 rounded-full border-4 transition-all duration-200 hover:scale-110 ${
+                        frameColor === value ? 'border-accent shadow-lg' : 'border-line'
                       }`}
-                    >
-                      {l.label}
-                    </button>
-                  )
-                })}
-              </div>
-              {photos.length !== 4 && (
-                <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">The grid layout needs 4 photos.</p>
+                      style={{ backgroundColor: value }}
+                    />
+                  ))}
+                  <label
+                    className="relative w-10 h-10 rounded-full border-4 border-line overflow-hidden cursor-pointer hover:scale-110 transition-all duration-200"
+                    title="Custom color"
+                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                  >
+                    <span className="sr-only">Custom frame color</span>
+                    <input
+                      type="color"
+                      value={frameColor}
+                      onChange={(e) => update({ frameColor: e.target.value })}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </label>
+                </div>
               )}
             </section>
 
-            <section className={panelClass}>
-              <h2 className={panelTitleClass}>Frame color</h2>
-              <div className="flex flex-wrap gap-3 justify-center" role="radiogroup" aria-label="Frame color">
-                {FRAME_COLORS.map(({ value, name }) => (
-                  <button
-                    key={value}
-                    role="radio"
-                    aria-checked={frameColor === value}
-                    aria-label={name}
-                    title={name}
-                    onClick={() => update({ frameColor: value })}
-                    className={`w-11 h-11 rounded-full border-4 transition-all duration-200 hover:scale-110 ${
-                      frameColor === value
-                        ? 'border-stone-800 dark:border-stone-200 shadow-lg'
-                        : 'border-stone-300 dark:border-stone-600'
-                    }`}
-                    style={{ backgroundColor: value }}
-                  />
-                ))}
-                <label
-                  className="relative w-11 h-11 rounded-full border-4 border-stone-300 dark:border-stone-600 overflow-hidden cursor-pointer hover:scale-110 transition-all duration-200"
-                  title="Custom color"
-                  style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
-                >
-                  <span className="sr-only">Custom frame color</span>
-                  <input
-                    type="color"
-                    value={frameColor}
-                    onChange={(e) => update({ frameColor: e.target.value })}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                </label>
-              </div>
-            </section>
-
-            <section className={panelClass}>
-              <h2 className={panelTitleClass}>Caption</h2>
+            <section className="panel">
+              <PanelTitle zh="题字">Caption</PanelTitle>
               <input
                 type="text"
                 value={caption}
                 maxLength={40}
+                disabled={!framed}
                 onChange={(e) => update({ caption: e.target.value })}
-                placeholder="Enter your caption..."
+                placeholder="Enter your caption… 写点什么"
                 aria-label="Caption"
-                className="w-full p-4 border border-stone-200 dark:border-stone-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-400 transition-all duration-200 text-stone-800 dark:text-stone-200 bg-white dark:bg-stone-800 placeholder-stone-400 dark:placeholder-stone-500"
+                className="w-full p-4 border border-line rounded-xl bg-paper text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 disabled:opacity-50"
               />
-              <label className="mt-4 flex items-center gap-3 text-stone-700 dark:text-stone-300 cursor-pointer">
+              <label className={`mt-4 flex items-center gap-3 text-ink ${framed ? 'cursor-pointer' : 'opacity-50'}`}>
                 <input
                   type="checkbox"
                   checked={showDate}
+                  disabled={!framed}
                   onChange={(e) => update({ showDate: e.target.checked })}
-                  className="w-5 h-5 accent-stone-800 dark:accent-stone-300"
+                  className="w-5 h-5 accent-[var(--accent)]"
                 />
                 Show today’s date
               </label>
+              {!framed && <p className="mt-3 text-xs text-ink-soft">Captions and dates appear on framed strips.</p>}
             </section>
           </div>
 
           <div className="space-y-6 lg:order-3">
-            <section className={panelClass}>
-              <h2 className={panelTitleClass}>Save your strip</h2>
+            <section className="panel">
+              <PanelTitle zh="保存">Save your strip</PanelTitle>
               <div className="space-y-3">
                 <button
                   onClick={handleDownload}
                   disabled={busy !== null}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 px-6 py-4 rounded-xl hover:bg-stone-900 dark:hover:bg-white transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-60"
+                  className="btn-primary w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all duration-200 disabled:opacity-60"
                 >
                   <Download className="w-5 h-5" />
                   {busy === 'download' ? 'Preparing…' : 'Download PNG'}
@@ -236,7 +264,7 @@ const CustomizationPage = () => {
                   <button
                     onClick={handleShare}
                     disabled={busy !== null}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 border border-stone-200 dark:border-stone-700 px-6 py-4 rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-60"
+                    className="btn-secondary w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all duration-200 disabled:opacity-60"
                   >
                     <Share2 className="w-5 h-5" />
                     {busy === 'share' ? 'Preparing…' : 'Share'}
@@ -244,19 +272,17 @@ const CustomizationPage = () => {
                 )}
                 <button
                   onClick={startOver}
-                  className="w-full inline-flex items-center justify-center gap-2 text-stone-600 dark:text-stone-400 px-6 py-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-200 font-medium"
+                  className="w-full inline-flex items-center justify-center gap-2 text-ink-soft px-6 py-3 rounded-xl hover:bg-paper-deep hover:text-ink transition-all duration-200 font-medium"
                 >
                   <RotateCcw className="w-4 h-4" /> Start over
                 </button>
               </div>
               {error && (
-                <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">
+                <p role="alert" className="mt-4 text-sm text-accent">
                   {error}
                 </p>
               )}
-              <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
-                Your photos stay on this device. Nothing is uploaded.
-              </p>
+              <p className="mt-4 text-xs text-ink-soft">Your photos stay on this device. Nothing is uploaded.</p>
             </section>
           </div>
         </div>
