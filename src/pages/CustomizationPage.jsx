@@ -153,9 +153,8 @@ const CustomizationPage = () => {
     const measure = () => {
       const style = getComputedStyle(pane)
       const innerW = pane.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-      const fixedHeight = pane.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
-      // On mobile the pane is capped at 65vh rather than a fixed height.
-      const innerH = window.matchMedia('(min-width: 1024px)').matches ? fixedHeight : window.innerHeight * 0.65 - 32
+      // The pane is capped at 75vh; that's the height budget for the strip.
+      const innerH = window.innerHeight * 0.75 - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
       const fitWidth = innerH / stripRatio
       const px = Math.floor(Math.min(innerW, Math.max(fitWidth, Math.min(MIN_TALL_WIDTH, innerW))))
       setPreviewWidth({ px, scrolls: px * stripRatio > innerH + 1 })
@@ -245,13 +244,13 @@ const CustomizationPage = () => {
           ← Back to camera
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-8 lg:gap-10 max-w-7xl mx-auto items-start">
-          {/* Preview (first on mobile); sticks beside the options on desktop. */}
-          <div className="lg:sticky lg:top-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-8 lg:gap-10 max-w-6xl mx-auto">
+          {/* Preview centred on top; options below so any layout shape has room. */}
+          <div className="w-full max-w-3xl mx-auto flex flex-col gap-4">
             <div className="relative rounded-3xl border border-line bg-surface/40">
               <div
                 ref={paneRef}
-                className="flex justify-center overflow-y-auto overscroll-contain p-4 max-h-[65vh] lg:max-h-none lg:h-[calc(100vh-13rem)] lg:min-h-[24rem] [scrollbar-width:thin]"
+                className="flex justify-center overflow-y-auto overscroll-contain p-4 sm:p-6 max-h-[75vh] [scrollbar-width:thin]"
               >
                 <button
                   type="button"
@@ -273,7 +272,7 @@ const CustomizationPage = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 w-full max-w-xl mx-auto">
               <button
                 onClick={handleDownload}
                 disabled={busy !== null}
@@ -298,7 +297,7 @@ const CustomizationPage = () => {
                 {error}
               </p>
             )}
-            <div className="flex items-center justify-between gap-3 text-xs text-ink-soft">
+            <div className="flex items-center justify-between gap-3 text-xs text-ink-soft w-full max-w-xl mx-auto">
               <span>Your photos stay on this device. Nothing is uploaded.</span>
               <button
                 onClick={startOver}
@@ -309,7 +308,7 @@ const CustomizationPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
               <section className="panel">
                 <PanelTitle ja="レイアウト">Layout</PanelTitle>
                 <div className="space-y-4">
@@ -342,7 +341,33 @@ const CustomizationPage = () => {
                 <PanelTitle ja="美顔">Beauty</PanelTitle>
                 <BeautySliders smooth={smooth} brighten={brighten} onChange={update} />
               </section>
-              <section className="panel sm:col-span-2">
+              <section className="panel">
+                <PanelTitle ja="ひとこと">Caption</PanelTitle>
+                <input
+                  type="text"
+                  value={caption}
+                  maxLength={40}
+                  disabled={!framed}
+                  onChange={(e) => update({ caption: e.target.value })}
+                  placeholder="Write a caption… ひとこと"
+                  aria-label="Caption"
+                  className="w-full p-4 border border-line rounded-xl bg-paper text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 disabled:opacity-50"
+                />
+                <div className="mt-1">
+                  <Checkbox checked={showDate} disabled={!framed} onChange={(v) => update({ showDate: v })}>
+                    Show today’s date
+                  </Checkbox>
+                  <Checkbox checked={showMoon} disabled={!framed || !showDate} onChange={(v) => update({ showMoon: v })}>
+                    Add tonight’s moon <span className="text-gold">{tonight.ja}</span>
+                  </Checkbox>
+                  <Checkbox checked={filmDate} onChange={(v) => update({ filmDate: v })}>
+                    Film date stamp <span className="text-gold">日付</span>
+                  </Checkbox>
+                </div>
+                {!framed && <p className="mt-3 text-xs text-ink-soft">Captions and the date line appear on framed strips.</p>}
+              </section>
+
+              <section className="panel md:col-span-2">
                 <PanelTitle ja="フィルター">Filter</PanelTitle>
                 <FilterPicker value={filter} onChange={(id) => update({ filter: id })} previewSrc={previewSrc} />
                 <div className="mt-3 flex justify-center">
@@ -408,31 +433,6 @@ const CustomizationPage = () => {
                     </label>
                   </div>
                 )}
-              </section>
-              <section className="panel">
-                <PanelTitle ja="ひとこと">Caption</PanelTitle>
-                <input
-                  type="text"
-                  value={caption}
-                  maxLength={40}
-                  disabled={!framed}
-                  onChange={(e) => update({ caption: e.target.value })}
-                  placeholder="Write a caption… ひとこと"
-                  aria-label="Caption"
-                  className="w-full p-4 border border-line rounded-xl bg-paper text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 disabled:opacity-50"
-                />
-                <div className="mt-1">
-                  <Checkbox checked={showDate} disabled={!framed} onChange={(v) => update({ showDate: v })}>
-                    Show today’s date
-                  </Checkbox>
-                  <Checkbox checked={showMoon} disabled={!framed || !showDate} onChange={(v) => update({ showMoon: v })}>
-                    Add tonight’s moon <span className="text-gold">{tonight.ja}</span>
-                  </Checkbox>
-                  <Checkbox checked={filmDate} onChange={(v) => update({ filmDate: v })}>
-                    Film date stamp <span className="text-gold">日付</span>
-                  </Checkbox>
-                </div>
-                {!framed && <p className="mt-3 text-xs text-ink-soft">Captions and the date line appear on framed strips.</p>}
               </section>
           </div>
         </div>
