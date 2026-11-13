@@ -16,8 +16,8 @@ const FilterPicker = ({ value, onChange, previewSrc, disabled }) => (
             previewSrc ? 'p-1' : 'px-4 py-2'
           } ${
             selected
-              ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-md'
-              : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-700 hover:shadow'
+              ? 'bg-accent text-on-accent shadow-md'
+              : 'bg-surface text-ink-soft border border-line hover:border-gold hover:text-ink'
           }`}
         >
           {previewSrc && (

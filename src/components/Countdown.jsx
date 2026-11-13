@@ -12,13 +12,9 @@ const Countdown = ({ seconds, onChange, disabled }) => {
       disabled={disabled}
       aria-label={seconds ? `Self-timer ${seconds} seconds. Click to change.` : 'Self-timer off. Click to turn on.'}
       title="Self-timer"
-      className="w-14 h-14 rounded-full flex items-center justify-center bg-white dark:bg-stone-900 shadow-lg border border-stone-200 dark:border-stone-700 transition-all duration-300 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+      className="w-14 h-14 rounded-full flex items-center justify-center bg-surface border border-line shadow-lg text-ink-soft transition-all duration-300 hover:border-gold hover:text-ink hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
     >
-      {seconds === 0 ? (
-        <Clock3 className="w-6 h-6 text-stone-600 dark:text-stone-400" />
-      ) : (
-        <span className="text-sm font-medium text-stone-600 dark:text-stone-400">{seconds}s</span>
-      )}
+      {seconds === 0 ? <Clock3 className="w-6 h-6" /> : <span className="text-sm font-medium">{seconds}s</span>}
     </button>
   )
 }

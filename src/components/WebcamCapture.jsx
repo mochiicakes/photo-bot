@@ -12,7 +12,10 @@ const ERROR_COPY = {
   },
 }
 
-const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUpload }) => {
+// Portrait gets a narrower box so the whole frame fits on a laptop screen.
+const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]' }
+
+const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUpload, aspect = 'portrait' }) => {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const [status, setStatus] = useState('loading')
@@ -45,7 +48,7 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
 
     setStatus('loading')
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      .getUserMedia({ video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
       .then((s) => {
         if (!active) {
           s.getTracks().forEach((t) => t.stop())
@@ -70,9 +73,9 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
   const error = ERROR_COPY[status]
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-900 p-2 shadow-2xl border border-stone-200 dark:border-stone-700">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-stone-300 dark:bg-stone-950">
+    <div className={`relative mx-auto w-full ${WIDTH_CLASS[aspect] ?? WIDTH_CLASS.portrait}`}>
+      <div className="relative overflow-hidden rounded-3xl bg-surface p-2 shadow-2xl border border-line">
+        <div className={`relative w-full overflow-hidden rounded-2xl bg-paper-deep ${aspect === 'square' ? 'aspect-square' : 'aspect-[3/4]'}`}>
           <video
             ref={videoRef}
             autoPlay
@@ -84,28 +87,28 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
           <canvas ref={canvasRef} className="hidden" />
 
           {status === 'loading' && (
-            <div className="absolute inset-0 flex items-center justify-center text-stone-500 dark:text-stone-400">
+            <div className="absolute inset-0 flex items-center justify-center text-ink-soft">
               <Camera className="w-10 h-10 animate-pulse" aria-label="Starting camera" />
             </div>
           )}
 
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
-              <CameraOff className="w-10 h-10 text-stone-500 dark:text-stone-400" />
+              <CameraOff className="w-10 h-10 text-ink-soft" />
               <div>
-                <p className="text-lg font-medium text-stone-800 dark:text-stone-100">{error.title}</p>
-                <p className="mt-1 text-sm text-stone-600 dark:text-stone-400 max-w-sm">{error.body}</p>
+                <p className="text-lg font-medium text-ink">{error.title}</p>
+                <p className="mt-1 text-sm text-ink-soft max-w-sm">{error.body}</p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
                 <button
                   onClick={() => setAttempt((a) => a + 1)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 shadow hover:shadow-lg transition"
+                  className="btn-secondary inline-flex items-center gap-2 px-5 py-2.5 rounded-full shadow transition"
                 >
                   <RotateCcw className="w-4 h-4" /> Try again
                 </button>
                 <button
                   onClick={onUseUpload}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow hover:shadow-lg transition"
+                  className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-full transition"
                 >
                   <Upload className="w-4 h-4" /> Upload photos
                 </button>
@@ -115,7 +118,7 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
 
           {countdown > 0 && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20" aria-live="assertive">
-              <div key={countdown} className="text-8xl md:text-9xl font-bold text-white drop-shadow-2xl animate-pulse">
+              <div key={countdown} className="font-header text-8xl md:text-9xl font-bold text-white drop-shadow-2xl animate-pulse">
                 {countdown}
               </div>
             </div>
@@ -127,11 +130,11 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
             <button
               onClick={onCapture}
               disabled={disabled}
-              className="w-20 h-20 bg-white dark:bg-stone-900 rounded-full shadow-xl border-4 border-stone-200 dark:border-stone-600 hover:scale-105 transition-all duration-300 flex items-center justify-center group disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              className="w-20 h-20 bg-surface rounded-full shadow-xl border-4 border-line hover:border-gold hover:scale-105 transition-all duration-300 flex items-center justify-center group disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
               aria-label="Take photo"
             >
-              <div className="w-13 h-13 bg-gradient-to-br from-stone-600 to-stone-800 dark:from-stone-300 dark:to-stone-100 rounded-full flex items-center justify-center group-hover:from-stone-700 group-hover:to-stone-900 dark:group-hover:from-stone-200 dark:group-hover:to-stone-50 transition-all duration-300">
-                <Camera className="w-7 h-7 text-white dark:text-stone-900" />
+              <div className="w-13 h-13 bg-accent rounded-full flex items-center justify-center group-hover:bg-accent-strong transition-all duration-300">
+                <Camera className="w-7 h-7 text-on-accent" />
               </div>
             </button>
           </div>
