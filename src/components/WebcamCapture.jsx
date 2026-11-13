@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Camera, CameraOff, RotateCcw, Upload } from 'lucide-react'
+import FilterLayer from './FilterLayer'
 
 const ERROR_COPY = {
   denied: {
@@ -16,7 +17,7 @@ const ERROR_COPY = {
 const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]', landscape: 'max-w-[38rem]' }
 const ASPECT_CLASS = { portrait: 'aspect-[3/4]', square: 'aspect-square', landscape: 'aspect-[4/3]' }
 
-const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUpload, aspect = 'portrait' }) => {
+const WebcamCapture = ({ ref, onCapture, countdown, filter, disabled, onUseUpload, aspect = 'portrait' }) => {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const [status, setStatus] = useState('loading')
@@ -77,14 +78,15 @@ const WebcamCapture = ({ ref, onCapture, countdown, filterCss, disabled, onUseUp
     <div className={`relative mx-auto w-full ${WIDTH_CLASS[aspect] ?? WIDTH_CLASS.portrait}`}>
       <div className="relative overflow-hidden rounded-3xl bg-surface p-2 shadow-2xl border border-line">
         <div className={`relative w-full overflow-hidden rounded-2xl bg-paper-deep ${ASPECT_CLASS[aspect] ?? ASPECT_CLASS.portrait}`}>
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`absolute inset-0 w-full h-full object-cover -scale-x-100 ${status === 'ready' ? '' : 'invisible'}`}
-            style={{ filter: filterCss }}
-          />
+          <FilterLayer filter={filter} className={`absolute inset-0 ${status === 'ready' ? '' : 'invisible'}`}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover -scale-x-100"
+            />
+          </FilterLayer>
           <canvas ref={canvasRef} className="hidden" />
 
           {status === 'loading' && (

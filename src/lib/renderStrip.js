@@ -1,4 +1,4 @@
-import { applyFilterToImageData } from './filters'
+import { applyFilterToCanvas } from './filters'
 import { getAspect, resolveLayout } from './options'
 
 // Base cell width (CSS px at scale 1) per layout; height follows the photo aspect.
@@ -71,10 +71,7 @@ const getTile = (img, filter, w, h) => {
   const sh = h / scale
   ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h)
 
-  if (filter !== 'none') {
-    const data = ctx.getImageData(0, 0, w, h)
-    ctx.putImageData(applyFilterToImageData(data, filter), 0, 0)
-  }
+  applyFilterToCanvas(ctx, w, h, filter)
   byKey.set(key, tile)
   return tile
 }
