@@ -24,13 +24,14 @@ const fileToDataUrl = (file) =>
     img.src = url
   })
 
-const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
+const PhotoUploader = ({ onAdd, onRemove, photos, targetCount, aspect = 'portrait' }) => {
   const fileInputRef = useRef(null)
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
   const remainingSlots = targetCount - photos.length
+  const shapeClass = aspect === 'square' ? 'aspect-square' : 'aspect-[3/4]'
 
   const handleFiles = async (files) => {
     setError('')
@@ -74,15 +75,15 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 bg-white dark:bg-stone-900 px-6 py-3 rounded-full shadow-lg border border-stone-200 dark:border-stone-700">
-          <span className="text-stone-600 dark:text-stone-400 font-medium">
+        <div className="inline-flex items-center gap-2 bg-surface px-6 py-3 rounded-full shadow-lg border border-line">
+          <span className="text-ink-soft font-medium">
             {photos.length} of {targetCount} photos uploaded
           </span>
           <div className="flex gap-1">
             {Array.from({ length: targetCount }).map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full ${i < photos.length ? 'bg-green-500' : 'bg-stone-200 dark:bg-stone-700'}`}
+                className={`w-2 h-2 rounded-full ${i < photos.length ? 'bg-accent' : 'bg-line'}`}
               />
             ))}
           </div>
@@ -90,18 +91,18 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
       </div>
 
       {photos.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
           {photos.map((photo, index) => (
             <div key={index} className="relative group">
               <img
                 src={photo}
                 alt={`Upload ${index + 1}`}
-                className="w-full h-32 object-cover rounded-xl border-2 border-stone-200 dark:border-stone-700 shadow-md"
+                className={`w-full object-cover rounded-xl border-2 border-line shadow-md ${shapeClass}`}
               />
               <button
                 onClick={() => onRemove(index)}
                 aria-label={`Remove photo ${index + 1}`}
-                className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow transition-opacity duration-200 hover:bg-red-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                className="absolute -top-2 -right-2 w-7 h-7 bg-accent text-on-accent rounded-full flex items-center justify-center shadow transition-opacity duration-200 hover:bg-accent-strong opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -112,16 +113,16 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
           {Array.from({ length: remainingSlots }).map((_, index) => (
             <div
               key={`empty-${index}`}
-              className="w-full h-32 border-2 border-dashed border-stone-300 dark:border-stone-600 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-800"
+              className={`w-full border-2 border-dashed border-line rounded-xl flex items-center justify-center bg-surface/60 ${shapeClass}`}
             >
-              <Plus className="w-8 h-8 text-stone-400 dark:text-stone-500" />
+              <Plus className="w-8 h-8 text-gold" />
             </div>
           ))}
         </div>
       )}
 
       {error && (
-        <p role="alert" className="text-center text-sm text-amber-700 dark:text-amber-400">
+        <p role="alert" className="text-center text-sm text-accent">
           {error}
         </p>
       )}
@@ -133,8 +134,8 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
           aria-label="Choose photos to upload"
           className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 cursor-pointer ${
             dragActive
-              ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-stone-300 dark:border-stone-600 bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900 hover:border-stone-400 dark:hover:border-stone-500'
+              ? 'border-accent bg-accent/10'
+              : 'border-line bg-surface/70 hover:border-gold'
           } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
           onClick={() => fileInputRef.current?.click()}
           onKeyDown={(e) => {
@@ -148,15 +149,15 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <Upload className="w-12 h-12 text-stone-400 dark:text-stone-500 mx-auto mb-4" />
-          <p className="text-lg font-medium text-stone-600 dark:text-stone-400 mb-2">
+          <Upload className="w-12 h-12 text-gold mx-auto mb-4" />
+          <p className="text-lg font-medium text-ink mb-2">
             {busy
               ? 'Preparing photos…'
               : photos.length === 0
                 ? `Upload your photos (${targetCount} max)`
                 : `Add more photos (${remainingSlots} remaining)`}
           </p>
-          <p className="text-sm text-stone-500">Tap to choose, or drag and drop images here</p>
+          <p className="text-sm text-ink-soft">Tap to choose, or drag and drop images here</p>
 
           <input
             ref={fileInputRef}
@@ -173,8 +174,8 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount }) => {
       )}
 
       {remainingSlots === 0 && (
-        <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800">
-          <div className="text-green-600 dark:text-green-400 font-medium">
+        <div className="text-center p-6 bg-accent/10 rounded-2xl border border-accent/30">
+          <div className="text-accent font-medium">
             All {targetCount} photos uploaded! Ready to customize.
           </div>
         </div>
