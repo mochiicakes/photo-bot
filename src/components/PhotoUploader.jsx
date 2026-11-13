@@ -3,8 +3,8 @@ import { Upload, X, Plus } from 'lucide-react'
 
 const MAX_DIMENSION = 1600
 
-// Downscale big uploads so they fit comfortably in sessionStorage and render fast.
-const fileToDataUrl = (file) =>
+// Downscale big uploads so they store compactly and render fast.
+const fileToBlob = (file) =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
@@ -15,7 +15,7 @@ const fileToDataUrl = (file) =>
       canvas.height = Math.round(img.naturalHeight * scale)
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
       URL.revokeObjectURL(url)
-      resolve(canvas.toDataURL('image/jpeg', 0.9))
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(`Could not read ${file.name}`))), 'image/jpeg', 0.9)
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
@@ -49,7 +49,7 @@ const PhotoUploader = ({ onAdd, onRemove, photos, targetCount, aspect = 'portrai
 
     setBusy(true)
     try {
-      const results = await Promise.allSettled(imageFiles.slice(0, remainingSlots).map(fileToDataUrl))
+      const results = await Promise.allSettled(imageFiles.slice(0, remainingSlots).map(fileToBlob))
       const ok = results.filter((r) => r.status === 'fulfilled').map((r) => r.value)
       if (ok.length < results.length) setError('Some photos couldn’t be read by your browser and were skipped.')
       if (ok.length) onAdd(ok)

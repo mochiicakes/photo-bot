@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { Camera, CameraOff, RotateCcw, Upload } from 'lucide-react'
+import { Camera, CameraOff, FlipHorizontal2, RotateCcw, SwitchCamera, Upload } from 'lucide-react'
 import FilterLayer from './FilterLayer'
 import { createBeautyRenderer, fitSize } from '../lib/beauty'
 
@@ -18,9 +18,16 @@ const ERROR_COPY = {
 const WIDTH_CLASS = { portrait: 'max-w-[26rem]', square: 'max-w-[30rem]', landscape: 'max-w-[38rem]' }
 const ASPECT_CLASS = { portrait: 'aspect-[3/4]', square: 'aspect-square', landscape: 'aspect-[4/3]' }
 
-// Live frames are processed at this size (long side) to keep the beauty pass smooth.
-const LIVE_MAX_SIDE = 1280
-const MEDIA_CLASS = 'absolute inset-0 w-full h-full object-cover -scale-x-100'
+// Live quality tiers (processing size + smoothing samples). We step down when frames lag.
+const QUALITY_TIERS = [
+  { maxSide: 1280, rings: 4 },
+  { maxSide: 960, rings: 3 },
+  { maxSide: 720, rings: 2 },
+]
+const WARMUP_FRAMES = 45
+
+const overlayButtonClass =
+  'w-10 h-10 rounded-full flex items-center justify-center bg-black/35 text-white backdrop-blur-sm transition hover:bg-black/50 disabled:opacity-40'
 
 const WebcamCapture = ({
   ref,
@@ -29,6 +36,8 @@ const WebcamCapture = ({
   filter,
   strength = 1,
   beauty,
+  mirror = true,
+  onMirrorChange,
   disabled,
   onUseUpload,
   aspect = 'portrait',
@@ -41,21 +50,27 @@ const WebcamCapture = ({
   const settingsRef = useRef({ beauty, strength })
   const [status, setStatus] = useState('loading')
   const [attempt, setAttempt] = useState(0)
+  const [facing, setFacing] = useState('user')
+  const [canSwitch, setCanSwitch] = useState(false)
 
   useImperativeHandle(ref, () => ({
-    // Returns a mirrored JPEG of the current frame (matches the mirrored preview), or null.
-    capture: () => {
-      const video = videoRef.current
-      const canvas = canvasRef.current
-      if (!video || !canvas || !video.videoWidth) return null
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx.translate(canvas.width, 0)
-      ctx.scale(-1, 1)
-      ctx.drawImage(video, 0, 0)
-      return canvas.toDataURL('image/jpeg', 0.92)
-    },
+    // Resolves to a JPEG Blob of the current frame, flipped only if the preview is mirrored.
+    capture: () =>
+      new Promise((resolve) => {
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        if (!video || !canvas || !video.videoWidth) return resolve(null)
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext('2d')
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        if (mirror) {
+          ctx.translate(canvas.width, 0)
+          ctx.scale(-1, 1)
+        }
+        ctx.drawImage(video, 0, 0)
+        canvas.toBlob(resolve, 'image/jpeg', 0.92)
+      }),
   }))
 
   useEffect(() => {
@@ -69,8 +84,11 @@ const WebcamCapture = ({
 
     setStatus('loading')
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
-      .then((s) => {
+      .getUserMedia({
+        video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+      .then(async (s) => {
         if (!active) {
           s.getTracks().forEach((t) => t.stop())
           return
@@ -78,18 +96,28 @@ const WebcamCapture = ({
         stream = s
         if (videoRef.current) videoRef.current.srcObject = s
         setStatus('ready')
+        // Devices are only fully listed once permission is granted.
+        const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])
+        if (active) setCanSwitch(devices.filter((d) => d.kind === 'videoinput').length > 1)
       })
       .catch((err) => {
         if (!active) return
         setStatus(err?.name === 'NotAllowedError' || err?.name === 'SecurityError' ? 'denied' : 'unavailable')
       })
 
-    // Always release the camera when leaving the page.
+    // Always release the camera when leaving the page or switching cameras.
     return () => {
       active = false
       stream?.getTracks().forEach((t) => t.stop())
     }
-  }, [attempt])
+  }, [attempt, facing])
+
+  const switchCamera = () => {
+    const next = facing === 'user' ? 'environment' : 'user'
+    setFacing(next)
+    // Selfies read naturally mirrored; the back camera shouldn't be.
+    onMirrorChange?.(next === 'user')
+  }
 
   useEffect(() => {
     settingsRef.current = { beauty, strength }
@@ -112,16 +140,32 @@ const WebcamCapture = ({
     const liveCtx = renderer ? null : live.getContext('2d') // no WebGL: plain copy, no beauty
     const baseCtx = base.getContext('2d')
     const useVideoCallback = 'requestVideoFrameCallback' in video
+    const frameRate = video.srcObject?.getVideoTracks?.()[0]?.getSettings?.().frameRate || 30
+    const expected = 1000 / frameRate
     let stopped = false
     let handle
+    let tier = 0
+    let frames = 0
+    let avgInterval = expected
+    let last = 0
 
-    const draw = () => {
+    const draw = (now = performance.now()) => {
       if (stopped) return
       if (video.videoWidth) {
-        const { width, height } = fitSize(video, LIVE_MAX_SIDE)
+        // Step quality down when frames arrive much slower than the camera delivers them.
+        if (last) avgInterval = avgInterval * 0.9 + (now - last) * 0.1
+        last = now
+        if (++frames > WARMUP_FRAMES && avgInterval > expected * 1.5 && tier < QUALITY_TIERS.length - 1) {
+          tier++
+          frames = 0
+          avgInterval = expected
+        }
+
+        const { maxSide, rings } = QUALITY_TIERS[tier]
+        const { width, height } = fitSize(video, maxSide)
         const { beauty: settings, strength: mix } = settingsRef.current
         if (renderer) {
-          renderer.render(video, width, height, settings)
+          renderer.render(video, width, height, settings, rings)
         } else {
           if (live.width !== width) live.width = width
           if (live.height !== height) live.height = height
@@ -145,6 +189,7 @@ const WebcamCapture = ({
   }, [status])
 
   const error = ERROR_COPY[status]
+  const mediaClass = `absolute inset-0 w-full h-full object-cover ${mirror ? '-scale-x-100' : ''}`
 
   return (
     <div className={`relative mx-auto w-full ${WIDTH_CLASS[aspect] ?? WIDTH_CLASS.portrait}`}>
@@ -161,12 +206,32 @@ const WebcamCapture = ({
           <FilterLayer
             filter={filter}
             strength={strength}
-            base={<canvas ref={baseRef} className={MEDIA_CLASS} />}
+            base={<canvas ref={baseRef} className={mediaClass} />}
             className={`absolute inset-0 ${status === 'ready' ? '' : 'invisible'}`}
           >
-            <canvas ref={liveRef} className={MEDIA_CLASS} />
+            <canvas ref={liveRef} className={mediaClass} />
           </FilterLayer>
           <canvas ref={canvasRef} className="hidden" />
+
+          {status === 'ready' && (
+            <div className="absolute top-3 right-3 flex flex-col gap-2">
+              {canSwitch && (
+                <button onClick={switchCamera} disabled={disabled} className={overlayButtonClass} aria-label="Switch camera" title="Switch camera">
+                  <SwitchCamera className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                onClick={() => onMirrorChange?.(!mirror)}
+                disabled={disabled}
+                aria-pressed={mirror}
+                aria-label={mirror ? 'Mirror on' : 'Mirror off'}
+                title={mirror ? 'Mirror on' : 'Mirror off'}
+                className={`${overlayButtonClass} ${mirror ? '' : 'ring-2 ring-white/70'}`}
+              >
+                <FlipHorizontal2 className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           {status === 'loading' && (
             <div className="absolute inset-0 flex items-center justify-center text-ink-soft">

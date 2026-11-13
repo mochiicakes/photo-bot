@@ -35,6 +35,7 @@ const PhotoCapturePage = () => {
     smooth,
     brighten,
     aspect,
+    mirror,
     update,
     addPhotos,
     removePhoto,
@@ -82,13 +83,12 @@ const PhotoCapturePage = () => {
       if (mountedRef.current) navigate('/customize')
     }, delay)
 
-  const takeShot = () => {
-    const img = webcamRef.current?.capture()
-    if (img) {
-      setFlashActive(true)
-      setTimeout(() => setFlashActive(false), 250)
-    }
-    return img
+  const takeShot = async () => {
+    const shot = webcamRef.current?.capture()
+    if (!shot) return null
+    setFlashActive(true)
+    setTimeout(() => setFlashActive(false), 250)
+    return shot
   }
 
   // Without a timer: one photo per click. With a timer: count down and fill every remaining slot.
@@ -108,9 +108,9 @@ const PhotoCapturePage = () => {
       setCountdown(null)
       if (cancelRef.current) break
 
-      const img = takeShot()
-      if (img) {
-        addPhotos([img])
+      const blob = await takeShot()
+      if (blob) {
+        await addPhotos([blob])
         taken++
       }
       if (i < shots - 1) await wait(800)
@@ -121,9 +121,9 @@ const PhotoCapturePage = () => {
     if (!cancelRef.current && photos.length + taken >= targetCount) goToCustomize(800)
   }
 
-  const handleUpload = (newPhotos) => {
-    addPhotos(newPhotos)
-    if (photos.length + newPhotos.length >= targetCount) goToCustomize(600)
+  const handleUpload = async (blobs) => {
+    await addPhotos(blobs)
+    if (photos.length + blobs.length >= targetCount) goToCustomize(600)
   }
 
   const thumbClass = { square: 'w-14 h-14', landscape: 'w-16 h-12' }[aspect] ?? 'w-12 h-16'
@@ -190,6 +190,8 @@ const PhotoCapturePage = () => {
                 filter={filter}
                 strength={filterStrength}
                 beauty={beauty}
+                mirror={mirror}
+                onMirrorChange={(value) => update({ mirror: value })}
                 disabled={isCapturing || isFull}
                 onCapture={handleCapture}
                 onUseUpload={() => switchMode('upload')}
