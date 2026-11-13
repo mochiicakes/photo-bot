@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Camera, RectangleHorizontal, RectangleVertical, RotateCcw, Square, Upload, X } from 'lucide-react'
 import { usePhotoSession } from '../context/PhotoSessionContext'
 import { ASPECTS, SCREEN_LIGHTS } from '../lib/options'
+import { shufflePoses } from '../lib/poses'
 import BrandHeader from '../components/BrandHeader'
 import PhotoUploader from '../components/PhotoUploader'
 import WebcamCapture from '../components/WebcamCapture'
@@ -36,6 +37,7 @@ const PhotoCapturePage = () => {
     brighten,
     aspect,
     mirror,
+    posePrompts,
     update,
     addPhotos,
     removePhoto,
@@ -52,6 +54,13 @@ const PhotoCapturePage = () => {
   const [countdown, setCountdown] = useState(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [flashActive, setFlashActive] = useState(false)
+  // Pose ideas: draw from a shuffled deck so none repeat until all have been shown.
+  const poseDeck = useRef([])
+  const nextPose = () => {
+    if (poseDeck.current.length === 0) poseDeck.current = shufflePoses()
+    return poseDeck.current.pop()
+  }
+  const [pose, setPose] = useState(nextPose)
 
   // Stop any running capture sequence (and leave fullscreen) when leaving the page.
   useEffect(() => {
@@ -100,6 +109,7 @@ const PhotoCapturePage = () => {
     let taken = 0
 
     for (let i = 0; i < shots; i++) {
+      if (i > 0) setPose(nextPose())
       for (let t = timerSeconds; t > 0; t--) {
         if (cancelRef.current) break
         setCountdown(t)
@@ -118,6 +128,7 @@ const PhotoCapturePage = () => {
 
     setCountdown(null)
     setIsCapturing(false)
+    setPose(nextPose())
     if (!cancelRef.current && photos.length + taken >= targetCount) goToCustomize(800)
   }
 
@@ -187,6 +198,7 @@ const PhotoCapturePage = () => {
                 ref={webcamRef}
                 aspect={aspect}
                 countdown={countdown}
+                prompt={posePrompts && !isFull ? pose : null}
                 filter={filter}
                 strength={filterStrength}
                 beauty={beauty}
@@ -230,6 +242,17 @@ const PhotoCapturePage = () => {
                   Beauty <span className="text-gold">美顔</span>
                 </span>
                 <BeautySliders smooth={smooth} brighten={brighten} onChange={update} />
+              </div>
+              <div className="flex justify-center">
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-ink cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={posePrompts}
+                    onChange={(e) => update({ posePrompts: e.target.checked })}
+                    className="w-4 h-4 accent-[var(--accent)]"
+                  />
+                  Pose ideas <span className="text-gold">ポーズ</span>
+                </label>
               </div>
             </div>
 

@@ -16,7 +16,10 @@ A cute, moonlit photobooth that runs entirely in the browser. Snap photos with y
   - *Basic*: B&W, Sepia, Warm, Vintage, Bold.
   - A **strength** slider fades any filter from 0–100%.
 - **Beauty 美顔.** Live skin smoothing (美肌) and brightening (美白) with adjustable levels. A WebGL bilateral blur only touches skin tones, so eyes, hair and edges stay sharp. It runs on the live camera and again at export, so you can still change it after taking the photo.
-- **Customize.** Frame colors (or pick your own), a caption (Japanese and other scripts supported) and an optional date stamp.
+- **Customize.** Frame colors (or pick your own), a caption (Japanese and other scripts supported) and an optional date line with tonight's moon phase (e.g. ◐ 三日月).
+- **Moon & seasonal frames.** Stars 星, Sakura 桜 (in season in spring), Tsukimi 月見 (in season in autumn) and a glowing Full moon 満月 frame that's marked "今夜だけ" on full-moon nights.
+- **Film date stamp.** The orange disposable-camera date ('26 11 13) on each photo, using the [DSEG](https://github.com/keshikan/DSEG) font (SIL OFL 1.1).
+- **Pose ideas.** A cute pose suggestion before each shot (ピース, 指ハート, ねこポーズ…), with no repeats until all have been shown.
 - **Save & share.** High-res PNG download, plus the native share sheet on supported devices (iOS/Android).
 - **Front/back camera and mirror.** Switch cameras on phones and turn mirroring on or off. The saved photo always matches the preview.
 - **Installable app.** Add it to your home screen; it works offline after the first visit.

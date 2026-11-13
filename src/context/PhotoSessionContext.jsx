@@ -15,6 +15,9 @@ const DEFAULTS = {
   frameColor: '#fdfdff',
   caption: '',
   showDate: true,
+  showMoon: true,
+  filmDate: false,
+  posePrompts: true,
   mirror: true,
 }
 
