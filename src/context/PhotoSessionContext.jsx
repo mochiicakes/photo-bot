@@ -40,12 +40,17 @@ export const PhotoSessionProvider = ({ children }) => {
   const [settings, setSettings] = useState(stored.settings)
   const [shots, setShots] = useState([]) // [{ id, url }]
   const [hydrated, setHydrated] = useState(false)
-  const knownIds = useRef(new Map()) // id -> url, to clean up removed shots
+  const knownIds = useRef(new Map()) // id -> url of every shot we've shown, to clean up removals
   const targetCountRef = useRef(settings.targetCount)
+  const shotsRef = useRef(shots)
 
   useEffect(() => {
     targetCountRef.current = settings.targetCount
   }, [settings.targetCount])
+
+  useEffect(() => {
+    shotsRef.current = shots
+  }, [shots])
 
   // Restore this tab's photos from IndexedDB (and migrate older data-URL sessions).
   useEffect(() => {
@@ -95,11 +100,11 @@ export const PhotoSessionProvider = ({ children }) => {
 
   /** Stores photo Blobs and appends them (up to the target count). */
   const addPhotos = useCallback(async (blobs) => {
+    const room = Math.max(0, targetCountRef.current - shotsRef.current.length)
+    const kept = blobs.filter(Boolean).slice(0, room)
     const added = await Promise.all(
-      blobs.filter(Boolean).map(async (blob) => ({ id: await putPhoto(blob), url: URL.createObjectURL(blob) })),
+      kept.map(async (blob) => ({ id: await putPhoto(blob), url: URL.createObjectURL(blob) })),
     )
-    // Register first so the cleanup effect can free any that get trimmed.
-    for (const s of added) knownIds.current.set(s.id, s.url)
     setShots((prev) => [...prev, ...added].slice(0, targetCountRef.current))
   }, [])
 

@@ -95,7 +95,14 @@ const WebcamCapture = ({
           return
         }
         stream = s
-        if (videoRef.current) videoRef.current.srcObject = s
+        const video = videoRef.current
+        if (!video) return
+        video.srcObject = s
+        // Only report ready once real frames arrive, so an instant tap can't capture nothing.
+        if (video.readyState < 2) {
+          await new Promise((resolve) => video.addEventListener('loadeddata', resolve, { once: true }))
+        }
+        if (!active) return
         setStatus('ready')
         // Devices are only fully listed once permission is granted.
         const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])

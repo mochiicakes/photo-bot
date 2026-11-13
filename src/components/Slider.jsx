@@ -12,7 +12,8 @@ const Slider = ({ label, sublabel, value, onChange, disabled }) => (
       value={Math.round(value * 100)}
       disabled={disabled}
       onChange={(e) => onChange(Number(e.target.value) / 100)}
-      className="flex-1 accent-[var(--accent)] cursor-pointer disabled:cursor-not-allowed"
+      className="range flex-1"
+      style={{ '--pct': `${Math.round(value * 100)}%` }}
     />
     <span className="w-10 text-right text-sm tabular-nums text-ink-soft">{Math.round(value * 100)}%</span>
   </label>
