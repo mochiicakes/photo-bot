@@ -1,4 +1,5 @@
 import { applyFilterToCanvas } from './filters'
+import { beautify } from './beauty'
 import { getAspect, resolveLayout } from './options'
 
 // Base cell width (CSS px at scale 1) per layout; height follows the photo aspect.
@@ -48,30 +49,46 @@ const loadImage = (src) => {
   return imageCache.get(src)
 }
 
-// Filtering is the expensive part, so cache each photo's filtered tile per size.
+// Beauty and filtering are the expensive parts, so cache each photo's tile per settings.
 const tileCache = new WeakMap()
 
-const getTile = (img, filter, w, h) => {
+const coverCrop = (source, w, h) => {
+  const tile = document.createElement('canvas')
+  tile.width = w
+  tile.height = h
+  const sourceW = source.naturalWidth || source.width
+  const sourceH = source.naturalHeight || source.height
+  // Same center crop as the camera preview's object-cover.
+  const scale = Math.max(w / sourceW, h / sourceH)
+  const sw = w / scale
+  const sh = h / scale
+  tile.getContext('2d', { willReadFrequently: true }).drawImage(source, (sourceW - sw) / 2, (sourceH - sh) / 2, sw, sh, 0, 0, w, h)
+  return tile
+}
+
+// Pipeline per photo: beauty on the full frame -> crop -> filter, mixed over the
+// unfiltered photo at `filterStrength` (like the preview's opacity layer).
+const getTile = (img, { filter, filterStrength = 1, smooth = 0, brighten = 0 }, w, h) => {
   let byKey = tileCache.get(img)
   if (!byKey) {
     byKey = new Map()
     tileCache.set(img, byKey)
   }
-  const key = `${filter}|${w}x${h}`
+  const key = `${filter}|${filterStrength}|${smooth}|${brighten}|${w}x${h}`
   if (byKey.has(key)) return byKey.get(key)
+  if (byKey.size > 24) byKey.clear()
 
-  const tile = document.createElement('canvas')
-  tile.width = w
-  tile.height = h
-  const ctx = tile.getContext('2d', { willReadFrequently: true })
-
-  // Cover-crop to the tile's aspect ratio (same center crop as the camera preview).
-  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight)
-  const sw = w / scale
-  const sh = h / scale
-  ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h)
-
-  applyFilterToCanvas(ctx, w, h, filter)
+  const tile = coverCrop(beautify(img, { smooth, brighten }), w, h)
+  if (filter !== 'none' && filterStrength > 0) {
+    const filtered = filterStrength >= 1 ? tile : coverCrop(tile, w, h)
+    applyFilterToCanvas(filtered.getContext('2d'), w, h, filter)
+    if (filtered !== tile) {
+      const ctx = tile.getContext('2d')
+      ctx.globalAlpha = filterStrength
+      ctx.drawImage(filtered, 0, 0)
+      ctx.globalAlpha = 1
+    }
+  }
   byKey.set(key, tile)
   return tile
 }
@@ -111,7 +128,7 @@ const CAPTION_FONT = '"Zen Maru Gothic", "DM Sans", sans-serif'
  */
 export const renderStrip = async (
   photos,
-  { layout, filter, frameColor, caption, showDate, aspect, frame },
+  { layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, aspect, frame },
   scale = 2,
 ) => {
   const framed = frame !== 'none'
@@ -145,7 +162,7 @@ export const renderStrip = async (
 
   images.forEach((img, i) => {
     const cell = geo.cells[i]
-    const tile = getTile(img, filter, Math.round(cell.w * scale), Math.round(cell.h * scale))
+    const tile = getTile(img, { filter, filterStrength, smooth, brighten }, Math.round(cell.w * scale), Math.round(cell.h * scale))
     ctx.save()
     roundedClip(ctx, cell.x, cell.y, cell.w, cell.h, framed ? 6 : 0)
     ctx.drawImage(tile, cell.x, cell.y, cell.w, cell.h)

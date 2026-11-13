@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, RectangleHorizontal, RectangleVertical, RotateCcw, Square, Upload, X } from 'lucide-react'
 import { usePhotoSession } from '../context/PhotoSessionContext'
@@ -9,7 +9,8 @@ import WebcamCapture from '../components/WebcamCapture'
 import Countdown from '../components/Countdown'
 import PhotoCount from '../components/PhotoCount'
 import FilterPicker from '../components/FilterPicker'
-import FilterLayer from '../components/FilterLayer'
+import PhotoThumb from '../components/PhotoThumb'
+import { BeautySliders, StrengthSlider } from '../components/LookControls'
 import ScreenLightPicker from '../components/ScreenLightPicker'
 import Segmented from '../components/Segmented'
 
@@ -26,8 +27,21 @@ const exitFullscreen = () => {
 
 const PhotoCapturePage = () => {
   const navigate = useNavigate()
-  const { photos, targetCount, filter, aspect, update, addPhotos, removePhoto, clearPhotos, setTargetCount } =
-    usePhotoSession()
+  const {
+    photos,
+    targetCount,
+    filter,
+    filterStrength,
+    smooth,
+    brighten,
+    aspect,
+    update,
+    addPhotos,
+    removePhoto,
+    clearPhotos,
+    setTargetCount,
+  } = usePhotoSession()
+  const beauty = useMemo(() => ({ smooth, brighten }), [smooth, brighten])
   const webcamRef = useRef(null)
   const cancelRef = useRef(false)
   const mountedRef = useRef(true)
@@ -174,6 +188,8 @@ const PhotoCapturePage = () => {
                 aspect={aspect}
                 countdown={countdown}
                 filter={filter}
+                strength={filterStrength}
+                beauty={beauty}
                 disabled={isCapturing || isFull}
                 onCapture={handleCapture}
                 onUseUpload={() => switchMode('upload')}
@@ -205,6 +221,13 @@ const PhotoCapturePage = () => {
                   Filter <span className="text-gold">フィルター</span>
                 </span>
                 <FilterPicker value={filter} onChange={(id) => update({ filter: id })} disabled={isCapturing} />
+                <StrengthSlider filter={filter} value={filterStrength} onChange={(v) => update({ filterStrength: v })} />
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-sm font-medium text-ink">
+                  Beauty <span className="text-gold">美顔</span>
+                </span>
+                <BeautySliders smooth={smooth} brighten={brighten} onChange={update} />
               </div>
             </div>
 
@@ -214,9 +237,14 @@ const PhotoCapturePage = () => {
                 {Array.from({ length: targetCount }).map((_, i) =>
                   photos[i] ? (
                     <div key={i} className="relative">
-                      <FilterLayer filter={filter} className={`${thumbClass} rounded-lg shadow border border-line`}>
-                        <img src={photos[i]} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                      </FilterLayer>
+                      <PhotoThumb
+                        src={photos[i]}
+                        filter={filter}
+                        strength={filterStrength}
+                        beauty={beauty}
+                        alt={`Photo ${i + 1}`}
+                        className={`${thumbClass} rounded-lg shadow border border-line`}
+                      />
                       {!isCapturing && (
                         <button
                           onClick={() => removePhoto(i)}
