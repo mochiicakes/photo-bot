@@ -21,6 +21,10 @@ export const resolveLayout = (layout, count) =>
 
 export const FRAME_STYLES = [
   { id: 'classic', label: 'Framed' },
+  { id: 'stars', label: 'Stars 星' },
+  { id: 'sakura', label: 'Sakura 桜' },
+  { id: 'tsukimi', label: 'Tsukimi 月見' },
+  { id: 'fullmoon', label: 'Full moon 満月' },
   { id: 'none', label: 'No frame' },
 ]
 
