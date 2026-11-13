@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, RectangleHorizontal, RectangleVertical, RotateCcw, Square, Upload, X } from 'lucide-react'
 import { usePhotoSession } from '../context/PhotoSessionContext'
-import { filterToCss } from '../lib/filters'
 import { ASPECTS, SCREEN_LIGHTS } from '../lib/options'
 import BrandHeader from '../components/BrandHeader'
 import PhotoUploader from '../components/PhotoUploader'
@@ -10,6 +9,7 @@ import WebcamCapture from '../components/WebcamCapture'
 import Countdown from '../components/Countdown'
 import PhotoCount from '../components/PhotoCount'
 import FilterPicker from '../components/FilterPicker'
+import FilterLayer from '../components/FilterLayer'
 import ScreenLightPicker from '../components/ScreenLightPicker'
 import Segmented from '../components/Segmented'
 
@@ -173,7 +173,7 @@ const PhotoCapturePage = () => {
                 ref={webcamRef}
                 aspect={aspect}
                 countdown={countdown}
-                filterCss={filterToCss(filter)}
+                filter={filter}
                 disabled={isCapturing || isFull}
                 onCapture={handleCapture}
                 onUseUpload={() => switchMode('upload')}
@@ -214,12 +214,9 @@ const PhotoCapturePage = () => {
                 {Array.from({ length: targetCount }).map((_, i) =>
                   photos[i] ? (
                     <div key={i} className="relative">
-                      <img
-                        src={photos[i]}
-                        alt={`Photo ${i + 1}`}
-                        className={`${thumbClass} object-cover rounded-lg shadow border border-line`}
-                        style={{ filter: filterToCss(filter) }}
-                      />
+                      <FilterLayer filter={filter} className={`${thumbClass} rounded-lg shadow border border-line`}>
+                        <img src={photos[i]} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      </FilterLayer>
                       {!isCapturing && (
                         <button
                           onClick={() => removePhoto(i)}
