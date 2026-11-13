@@ -2,9 +2,23 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Absolute site URL for link-preview tags. On Vercel this follows the project's production
+// domain automatically (so renaming the project just needs a redeploy); SITE_URL overrides it.
+const siteUrl = (
+  process.env.SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`) ||
+  'https://photo-bot-kappa.vercel.app'
+).replace(/\/$/, '')
+
+const siteUrlPlugin = {
+  name: 'site-url',
+  transformIndexHtml: (html) => html.replaceAll('__SITE_URL__', siteUrl),
+}
+
 export default defineConfig({
   plugins: [
     react(),
+    siteUrlPlugin,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
