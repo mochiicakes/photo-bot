@@ -33,6 +33,7 @@ const WebcamCapture = ({
   ref,
   onCapture,
   countdown,
+  prompt,
   filter,
   strength = 1,
   beauty,
@@ -230,6 +231,20 @@ const WebcamCapture = ({
               >
                 <FlipHorizontal2 className="w-5 h-5" />
               </button>
+            </div>
+          )}
+
+          {status === 'ready' && prompt && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 max-w-[70%]" aria-live="polite">
+              <div
+                key={prompt.en}
+                className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-1.5 text-sm font-medium text-[#1d2552] shadow-lg backdrop-blur animate-[pose-in_.35s_ease-out]"
+              >
+                <span className="text-base">{prompt.icon}</span>
+                <span className="truncate">
+                  {prompt.en} <span className="text-[#d99a12]">{prompt.ja}</span>
+                </span>
+              </div>
             </div>
           )}
 

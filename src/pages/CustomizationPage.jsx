@@ -23,11 +23,26 @@ import FilterPicker from '../components/FilterPicker'
 import { BeautySliders, StrengthSlider } from '../components/LookControls'
 import { useBeautySrc } from '../lib/useBeautySrc'
 import { trackEvent } from '../lib/analytics'
+import { seasonalStyles } from '../lib/frameDecor'
+import { moonPhase } from '../lib/moon'
 import BrandHeader from '../components/BrandHeader'
 import Segmented from '../components/Segmented'
 
 const ASPECT_ICONS = { portrait: RectangleVertical, square: Square, landscape: RectangleHorizontal }
 const FRAME_ICONS = { classic: Frame, none: SquareDashed }
+
+const Checkbox = ({ checked, onChange, disabled, children }) => (
+  <label className={`mt-3 flex items-center gap-3 text-ink ${disabled ? 'opacity-50' : 'cursor-pointer'}`}>
+    <input
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.checked)}
+      className="w-5 h-5 accent-[var(--accent)]"
+    />
+    {children}
+  </label>
+)
 const ROW_ICONS = { 1: RectangleVertical, 2: Rows2, 3: Rows3, 4: Rows4 }
 const layoutIcon = (id, count) => {
   if (id === 'grid') return LayoutGrid
@@ -65,6 +80,8 @@ const CustomizationPage = () => {
     frameColor,
     caption,
     showDate,
+    showMoon,
+    filmDate,
     update,
     clearPhotos,
     hydrated,
@@ -75,11 +92,26 @@ const CustomizationPage = () => {
   const shareSupported = useMemo(canShareFiles, [])
 
   const options = useMemo(
-    () => ({ layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, aspect, frame }),
-    [layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, aspect, frame],
+    () => ({
+      layout,
+      filter,
+      filterStrength,
+      smooth,
+      brighten,
+      frameColor,
+      caption,
+      showDate,
+      showMoon,
+      filmDate,
+      aspect,
+      frame,
+    }),
+    [layout, filter, filterStrength, smooth, brighten, frameColor, caption, showDate, showMoon, filmDate, aspect, frame],
   )
   const previewSrc = useBeautySrc(photos[0], { smooth, brighten })
   const framed = frame !== 'none'
+  const inSeason = useMemo(() => seasonalStyles(), [])
+  const tonight = useMemo(() => moonPhase(), [])
   const count = photos.length
   const activeLayout = resolveLayout(layout, count)
   const availableLayouts = layoutsFor(count)
@@ -229,13 +261,32 @@ const CustomizationPage = () => {
 
             <section className="panel">
               <PanelTitle ja="フレーム">Frame</PanelTitle>
-              <Segmented
-                size="sm"
-                label="Frame style"
-                value={frame}
-                onChange={(id) => update({ frame: id })}
-                options={FRAME_STYLES.map((f) => ({ id: f.id, label: f.label, icon: FRAME_ICONS[f.id] }))}
-              />
+              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Frame style">
+                {FRAME_STYLES.map((f) => {
+                  const Icon = FRAME_ICONS[f.id]
+                  const selected = frame === f.id
+                  const badge = f.id === 'fullmoon' && inSeason.includes('fullmoon') ? '今夜だけ' : inSeason.includes(f.id) ? '旬' : null
+                  return (
+                    <button
+                      key={f.id}
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => update({ frame: f.id })}
+                      className={`relative inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                        selected ? 'bg-accent text-on-accent shadow' : 'bg-paper text-ink-soft border border-line hover:border-gold hover:text-ink'
+                      }`}
+                    >
+                      {Icon && <Icon className="w-4 h-4" />}
+                      {f.label}
+                      {badge && (
+                        <span className="absolute -top-2 -right-1 rounded-full bg-gold px-1.5 text-[10px] leading-4 text-[#1d2552] shadow">
+                          {badge}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
               {framed && (
                 <div className="mt-4 flex flex-wrap gap-3" role="radiogroup" aria-label="Frame color">
                   {FRAME_COLORS.map(({ value, name }) => (
@@ -281,17 +332,18 @@ const CustomizationPage = () => {
                 aria-label="Caption"
                 className="w-full p-4 border border-line rounded-xl bg-paper text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-gold transition-all duration-200 disabled:opacity-50"
               />
-              <label className={`mt-4 flex items-center gap-3 text-ink ${framed ? 'cursor-pointer' : 'opacity-50'}`}>
-                <input
-                  type="checkbox"
-                  checked={showDate}
-                  disabled={!framed}
-                  onChange={(e) => update({ showDate: e.target.checked })}
-                  className="w-5 h-5 accent-[var(--accent)]"
-                />
-                Show today’s date
-              </label>
-              {!framed && <p className="mt-3 text-xs text-ink-soft">Captions and dates appear on framed strips.</p>}
+              <div className="mt-1">
+                <Checkbox checked={showDate} disabled={!framed} onChange={(v) => update({ showDate: v })}>
+                  Show today’s date
+                </Checkbox>
+                <Checkbox checked={showMoon} disabled={!framed || !showDate} onChange={(v) => update({ showMoon: v })}>
+                  Add tonight’s moon <span className="text-gold">{tonight.ja}</span>
+                </Checkbox>
+                <Checkbox checked={filmDate} onChange={(v) => update({ filmDate: v })}>
+                  Film date stamp <span className="text-gold">日付</span>
+                </Checkbox>
+              </div>
+              {!framed && <p className="mt-3 text-xs text-ink-soft">Captions and the date line appear on framed strips.</p>}
             </section>
           </div>
 
