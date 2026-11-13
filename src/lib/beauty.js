@@ -21,6 +21,7 @@ uniform vec2 u_texel;
 uniform float u_radius;
 uniform float u_smooth;
 uniform float u_brighten;
+uniform float u_rings;
 varying vec2 v_uv;
 
 float skinMask(vec3 c) {
@@ -41,7 +42,8 @@ void main() {
     vec3 sum = c;
     float total = 1.0;
     for (int ring = 1; ring <= 4; ring++) {
-      float r = u_radius * float(ring) / 4.0;
+      if (float(ring) > u_rings) break;
+      float r = u_radius * float(ring) / u_rings;
       for (int k = 0; k < 12; k++) {
         float a = float(k) * 0.5235988 + float(ring) * 0.2617994;
         vec3 s = texture2D(u_image, v_uv + vec2(cos(a), sin(a)) * r * u_texel).rgb;
@@ -104,12 +106,21 @@ export const createBeautyRenderer = (canvas = document.createElement('canvas')) 
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
 
   const u = (name) => gl.getUniformLocation(program, name)
-  const uniforms = { texel: u('u_texel'), radius: u('u_radius'), smooth: u('u_smooth'), brighten: u('u_brighten') }
+  const uniforms = {
+    texel: u('u_texel'),
+    radius: u('u_radius'),
+    smooth: u('u_smooth'),
+    brighten: u('u_brighten'),
+    rings: u('u_rings'),
+  }
 
   return {
     canvas,
-    /** Draws `source` (image, video or canvas) at width x height with the beauty settings. */
-    render(source, width, height, { smooth = 0, brighten = 0 } = {}) {
+    /**
+     * Draws `source` (image, video or canvas) at width x height with the beauty settings.
+     * `rings` (1-4) trades smoothing quality for speed on slow devices.
+     */
+    render(source, width, height, { smooth = 0, brighten = 0 } = {}, rings = 4) {
       if (canvas.width !== width) canvas.width = width
       if (canvas.height !== height) canvas.height = height
       gl.viewport(0, 0, width, height)
@@ -119,6 +130,7 @@ export const createBeautyRenderer = (canvas = document.createElement('canvas')) 
       gl.uniform1f(uniforms.radius, Math.min(width, height) * 0.012)
       gl.uniform1f(uniforms.smooth, smooth)
       gl.uniform1f(uniforms.brighten, brighten)
+      gl.uniform1f(uniforms.rings, rings)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
       return canvas
     },

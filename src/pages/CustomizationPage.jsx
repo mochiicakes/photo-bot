@@ -66,6 +66,7 @@ const CustomizationPage = () => {
     showDate,
     update,
     clearPhotos,
+    hydrated,
   } = usePhotoSession()
   const previewRef = useRef(null)
   const [busy, setBusy] = useState(null)
@@ -104,6 +105,7 @@ const CustomizationPage = () => {
     }
   }, [photos, options])
 
+  if (!hydrated) return null
   if (count === 0) return <Navigate to="/capture" replace />
 
   const exportBlob = async () => canvasToBlob(await renderStrip(photos, options, 3))
